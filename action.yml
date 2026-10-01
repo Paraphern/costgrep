@@ -1,0 +1,40 @@
+name: 'Agent CI Report'
+description: >-
+  GitHub Actions cost breakdown by who triggered the run: human vs AI agent
+  (Copilot, Claude, Codex, Cursor...) vs bot. List-price model, public
+  methodology, runs on your runner — no data leaves your infrastructure.
+author: 'agent-ci-finops'
+
+inputs:
+  days:
+    description: 'Look-back window in days'
+    default: '30'
+  token:
+    description: 'GitHub token with actions:read (repo-scoped GITHUB_TOKEN is enough)'
+    default: '${{ github.token }}'
+  max-runs:
+    description: 'Safety cap on analyzed workflow runs'
+    default: '500'
+  config:
+    description: 'Optional JSON file {agents, bots, rates} to extend/override defaults'
+    default: ''
+  json-file:
+    description: 'Where to write the full JSON report (relative to workspace)'
+    default: 'agent-ci-report.json'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'agent-ci-report: human vs agent vs bot CI spend'
+      shell: bash
+      env:
+        ACR_TOKEN: ${{ inputs.token }}
+        ACR_REPO: ${{ github.repository }}
+      run: |
+        ARGS=(--repo "$ACR_REPO" --days "${{ inputs.days }}" --max-runs "${{ inputs.max-runs }}" --token "$ACR_TOKEN" --json-file "${{ inputs.json-file }}" --step-summary)
+        if [ -n "${{ inputs.config }}" ]; then ARGS+=(--config "${{ inputs.config }}"); fi
+        node "${{ github.action_path }}/scripts/agent-ci-report.mjs" "${ARGS[@]}"
+
+branding:
+  icon: 'bar-chart-2'
+  color: 'purple'

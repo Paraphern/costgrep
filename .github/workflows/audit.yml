@@ -1,0 +1,22 @@
+name: agent-ci self-audit
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report human vs agent vs bot CI spend for this repo
+        uses: ./
+        with:
+          days: '30'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-ci-report
+          path: agent-ci-report.json

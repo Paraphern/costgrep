@@ -1,0 +1,13 @@
+{
+  "name": "agent-ci-report",
+  "version": "0.1.0",
+  "description": "GitHub Actions cost breakdown: human vs AI agent vs bot. Zero-dependency CLI + composite action.",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "agent-ci-report": "scripts/agent-ci-report.mjs" },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18" },
+  "files": ["scripts/", "action.yml", "README.md", "LICENSE"]
+}
