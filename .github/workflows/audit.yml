@@ -18,5 +18,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: agent-ci-report
-          path: agent-ci-report.json
+          name: costgrep-report
+          path: costgrep.json

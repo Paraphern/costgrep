@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * agent-ci-report — GitHub Actions cost breakdown: human vs AI-agent vs bot.
+ * costgrep — GitHub Actions cost breakdown: human vs AI-agent vs bot.
  *
  * Zero-dependency (Node >= 18). Runs on YOUR runner, talks only to
  * api.github.com with the token you pass. No telemetry, no data leaves your infra.
@@ -89,7 +89,7 @@ function parseCli() {
     },
   });
   if (values.help) {
-    console.log(`usage: agent-ci-report.mjs [--repo owner/name] [--days 30] [--token TOKEN]
+    console.log(`usage: costgrep.mjs [--repo owner/name] [--days 30] [--token TOKEN]
                  [--max-runs N] [--config FILE] [--fixture-dir DIR]
                  [--json-file FILE] [--step-summary] [--quiet]`);
     process.exit(0);
@@ -118,7 +118,7 @@ async function gh(path, token) {
   const headers = {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': 'agent-ci-report',
+    'User-Agent': 'costgrep',
   };
   if (token) headers.Authorization = `Bearer ${token}`;
   for (let attempt = 0; ; attempt++) {
@@ -127,7 +127,7 @@ async function gh(path, token) {
       const reset = Number(res.headers.get('x-ratelimit-reset') || 0) * 1000;
       if (attempt === 0) {
         const wait = Math.min(Math.max(reset - Date.now(), 2000), 60_000);
-        if (!process.env.AGENT_CI_REPORT_NO_WAIT) {
+        if (!process.env.COSTGREP_NO_WAIT) {
           console.error(`rate limit hit, retrying in ${Math.round(wait / 1000)}s`);
           await new Promise(r => setTimeout(r, wait));
           continue;
@@ -316,7 +316,7 @@ const money = n => (n < 0 ? '-$' : '$') + Math.abs(n).toFixed(2);
 
 function renderTable(rep) {
   const L = [];
-  L.push(`\nagent-ci-report — ${rep.repo} (last ${rep.window.days} days, ${rep.runsAnalyzed} runs, ${rep.jobsCounted} jobs)`);
+  L.push(`\ncostgrep — ${rep.repo} (last ${rep.window.days} days, ${rep.runsAnalyzed} runs, ${rep.jobsCounted} jobs)`);
   L.push('='.repeat(72));
   L.push('class      runs   run%    minutes       cost    cost%');
   L.push('-'.repeat(72));
@@ -350,7 +350,7 @@ function renderMarkdown(rep) {
     return `| ${k} | ${t.runs} | ${t.pctRuns.toFixed(1)}% | ${Math.round(t.minutes)} | ${money(t.cost)} | ${t.pctCost.toFixed(1)}% |`;
   }).join('\n');
   const wf = rep.topWorkflowsByCost.map(w => `| ${w.workflow} | ${money(w.cost)} | ${w.pctOfTotal.toFixed(1)}% |`).join('\n');
-  return `## 🤖 agent-ci-report — ${rep.repo}
+  return `## 🤖 costgrep — ${rep.repo}
 
 **${money(a.cost)} from AI agents (${a.pctCost.toFixed(1)}% of CI spend)** · bot runs: ${rep.totals.bot.runs} (${rep.totals.bot.pctRuns.toFixed(1)}%)
 

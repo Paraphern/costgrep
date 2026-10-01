@@ -2,7 +2,7 @@
 
 ## Show HN (после публикации репо)
 
-**Title:** Show HN: agent-ci-report – GitHub Actions spend, split human vs AI agent vs bot
+**Title:** Show HN: costgrep – GitHub Actions spend, split human vs AI agent vs bot
 
 We kept getting the "why did our Actions bill jump?" question and GitHub's own usage
 view can't answer *who* spent it — since June 2026 Copilot code review bills minutes

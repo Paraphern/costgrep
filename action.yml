@@ -1,4 +1,4 @@
-name: 'Agent CI Report'
+name: 'CostGrep'
 description: >-
   GitHub Actions cost breakdown by who triggered the run: human vs AI agent
   (Copilot, Claude, Codex, Cursor...) vs bot. List-price model, public
@@ -20,12 +20,12 @@ inputs:
     default: ''
   json-file:
     description: 'Where to write the full JSON report (relative to workspace)'
-    default: 'agent-ci-report.json'
+    default: 'costgrep.json'
 
 runs:
   using: 'composite'
   steps:
-    - name: 'agent-ci-report: human vs agent vs bot CI spend'
+    - name: 'costgrep: human vs agent vs bot CI spend'
       shell: bash
       env:
         ACR_TOKEN: ${{ inputs.token }}
@@ -33,7 +33,7 @@ runs:
       run: |
         ARGS=(--repo "$ACR_REPO" --days "${{ inputs.days }}" --max-runs "${{ inputs.max-runs }}" --token "$ACR_TOKEN" --json-file "${{ inputs.json-file }}" --step-summary)
         if [ -n "${{ inputs.config }}" ]; then ARGS+=(--config "${{ inputs.config }}"); fi
-        node "${{ github.action_path }}/scripts/agent-ci-report.mjs" "${ARGS[@]}"
+        node "${{ github.action_path }}/scripts/costgrep.mjs" "${ARGS[@]}"
 
 branding:
   icon: 'bar-chart-2'
