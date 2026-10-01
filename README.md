@@ -1,4 +1,4 @@
-# agent-ci-report
+# costgrep
 
 **GitHub Actions cost breakdown by who triggered the run: human vs AI agent vs bot.**
 
@@ -7,7 +7,7 @@ they all burn your Actions minutes *on top of* AI credits ([#192948], 958 downvo
 GitHub's own usage views don't tell you **who** spent it. This does:
 
 ```
-$ node scripts/agent-ci-report.mjs --repo actions/stale --days 60
+$ node scripts/costgrep.mjs --repo actions/stale --days 60
 class      runs   run%    minutes       cost    cost%
 agent         0   0.0%         0      $0.00    0.0%
 human         2  25.0%         6      $0.16   54.5%
@@ -24,7 +24,7 @@ dependencies, one file, no telemetry, no code/log access — workflow-run metada
 
 ```yaml
 # .github/workflows/agent-ci-audit.yml
-name: agent-ci audit
+name: costgrep audit
 on:
   schedule: [{cron: '0 6 * * 1'}]   # weekly
   workflow_dispatch:
@@ -35,12 +35,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4   # only so the JSON report lands in an artifact next to it
-      - uses: YOUR_LOGIN/agent-ci-report@v1
+      - uses: YOUR_LOGIN/costgrep@v1
         with:
           days: '30'
       - uses: actions/upload-artifact@v4
         if: always()
-        with: {name: agent-ci-report, path: agent-ci-report.json}
+        with: {name: costgrep, path: costgrep.json}
 ```
 
 No org-admin rights, no billing access, no webhook — the repo-scoped
@@ -49,10 +49,10 @@ No org-admin rights, no billing access, no webhook — the repo-scoped
 ## CLI
 
 ```bash
-node scripts/agent-ci-report.mjs --repo owner/name [--days 30] [--token $GITHUB_TOKEN] \
+node scripts/costgrep.mjs --repo owner/name [--days 30] [--token $GITHUB_TOKEN] \
   [--max-runs 1000] [--config my-rules.json] [--json-file report.json] [--step-summary]
 # offline demo on a bundled fixture:
-node scripts/agent-ci-report.mjs --fixture-dir test/fixtures/demo-repo --days 4000
+node scripts/costgrep.mjs --fixture-dir test/fixtures/demo-repo --days 4000
 ```
 
 `--config` (JSON) extends the classifier and overrides rates:
@@ -104,13 +104,13 @@ node scripts/agent-ci-report.mjs --fixture-dir test/fixtures/demo-repo --days 40
 | Datadog CI Visibility | git-author only | per-committer $ | yes |
 | Blacksmith Analytics | ✗ | minutes | no |
 | TrimCI | bots excluded from *billing* | failure cost | no |
-| **agent-ci-report** | **human / agent / bot** | **list-price, reconciliation-ready** | **no** |
+| **costgrep** | **human / agent / bot** | **list-price, reconciliation-ready** | **no** |
 
 ## Calibration case (do this first)
 
 Run it on a repo where you can see the Actions usage chart for the same window:
 
-1. `node scripts/agent-ci-report.mjs --repo your-org/your-repo --days 30 --json-file r.json`
+1. `node scripts/costgrep.mjs --repo your-org/your-repo --days 30 --json-file r.json`
 2. Compare `totalMinutes` per workflow against the GitHub UI "Usage" breakdown
    for the same 30 days (billable minutes, per-job rounded).
 3. Compare per-class cost shares against what you *know* about the repo

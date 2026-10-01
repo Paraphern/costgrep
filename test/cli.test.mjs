@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const CLI = join(ROOT, 'scripts', 'agent-ci-report.mjs');
+const CLI = join(ROOT, 'scripts', 'costgrep.mjs');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'demo-repo');
 
 const mod = await import(`file://${CLI.replace(/\\/g, '/')}`);
@@ -124,7 +124,7 @@ test('CLI end-to-end on fixture (offline mode)', () => {
   const out = execFileSync(process.execPath,
     [CLI, '--fixture-dir', FIXTURE, '--days', '4000', '--quiet'],
     { encoding: 'utf8' });
-  assert.ok(out.includes('agent-ci-report — (fixture)'), out);
+  assert.ok(out.includes('costgrep — (fixture)'), out);
   assert.ok(out.includes('Agents cost $0.12'), out);
   assert.ok(out.includes('Bot runs: 2 (25.0% of all runs)'), out);
 });
