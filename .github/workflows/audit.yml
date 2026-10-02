@@ -1,4 +1,4 @@
-name: agent-ci self-audit
+name: costgrep self-audit
 on:
   schedule:
     - cron: '0 6 * * 1'
@@ -11,6 +11,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4   # required: local action (uses: ./) needs action.yml in the workspace
       - name: Report human vs agent vs bot CI spend for this repo
         uses: ./
         with:

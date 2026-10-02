@@ -34,7 +34,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4   # only so the JSON report lands in an artifact next to it
+      - uses: actions/checkout@v4   # only needed if you run a *local* copy / want the JSON in an artifact
       - uses: YOUR_LOGIN/costgrep@v1
         with:
           days: '30'
