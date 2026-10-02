@@ -11,7 +11,7 @@ const CLI = join(ROOT, 'scripts', 'costgrep.mjs');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'demo-repo');
 
 const mod = await import(`file://${CLI.replace(/\\/g, '/')}`);
-const { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, norm, DEFAULT_RATES } = mod;
+const { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, norm, DEFAULT_RATES } = mod;
 
 const run = (overrides = {}) => {
   const actor = overrides.actor ?? { login: 'x', type: 'User' };
@@ -166,6 +166,32 @@ test('outputs for the CI budget gate', () => {
   assert.equal(o['bot-runs-pct'], '25.0');
   assert.equal(o['total-cost'], '1.7260');
   assert.equal(o['total-minutes'], '71');
+});
+
+test('visibility notice: a list-price figure must never read as money owed', () => {
+  const mk = (repoVisibility, billed) => ({ provenance: { repoVisibility, billedEvenIfPublic: billed } });
+  // public repo, only free runner classes: "you paid $0" must be unmissable
+  const pub = visibilityNotice(mk('public', { jobs: 0, cost: 0 }));
+  assert.ok(pub.includes('FREE'), pub);
+  assert.ok(pub.includes('not money owed'), pub);
+  assert.ok(!pub.includes('NOTE'), pub);
+  // public repo WITH macos/larger jobs: the exception is spelled out
+  const pubM = visibilityNotice(mk('public', { jobs: 3, cost: 0.15 }));
+  assert.ok(pubM.includes('ARE billed even for public repos'), pubM);
+  assert.ok(pubM.includes('$0.15'), pubM);
+  // private repo: included-minutes framing
+  const priv = visibilityNotice(mk('private', { jobs: 0, cost: 0 }));
+  assert.ok(priv.includes('included plan minutes'), priv);
+  // unknown: silence beats a guess
+  assert.equal(visibilityNotice(mk('unknown', { jobs: 0, cost: 0 })), null);
+});
+
+test('fixture report (unknown visibility) carries no guess about billing', () => {
+  assert.equal(rep.provenance.repoVisibility, 'unknown');
+  const t = renderTable(rep);
+  assert.ok(!t.includes('repo: standard Linux/Windows'), t);
+  const md = renderMarkdown(rep);
+  assert.ok(md.includes('(could not determine)'), md);
 });
 
 test('CLI end-to-end on fixture: files on disk + gh-output', () => {

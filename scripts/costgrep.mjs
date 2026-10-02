@@ -242,7 +242,31 @@ function inferRate(job, cfg) {
   return { sku: 'actions_linux', rate: r.actions_linux, fallback: true };
 }
 
-function buildReport(repo, runs, jobsByRun, cfg, days) {
+async function repoVisibility(repo, token) {
+  try {
+    const r = await gh(`/repos/${repo}`, token);
+    return r.private ? 'private' : 'public';
+  } catch { return 'unknown'; }
+}
+
+// Standard Linux/Windows hosted minutes are FREE for public repositories;
+// macOS and larger runners are billed even there. Say so explicitly —
+// a list-price figure must never read as "money you owe".
+function visibilityNotice(rep) {
+  const v = rep.provenance.repoVisibility;
+  const billed = rep.provenance.billedEvenIfPublic || { jobs: 0, cost: 0 };
+  const note = (extra) =>
+    `>>> ${v} repo: standard Linux/Windows minutes are ${v === 'public' ? 'FREE — the $ above is the list-price VALUE of this compute (what it would cost in a private repo), not money owed' : 'list-price; included plan minutes are consumed before these amounts reach the invoice'}.${extra}`;
+  if (v === 'public') {
+    return note(billed.jobs > 0
+      ? ` NOTE: ${billed.jobs} macOS/larger-runner jobs ARE billed even for public repos (~$${billed.cost.toFixed(2)}).`
+      : '');
+  }
+  if (v === 'private') return note('');
+  return null; // unknown — stay silent rather than guess
+}
+
+function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
   const totals = Object.fromEntries(CLASS_ORDER.map(k => [k, { runs: 0, jobs: 0, minutes: 0, cost: 0 }]));
   const selfHosted = { jobs: 0, minutes: 0 }; // $0 while the platform fee is postponed
   let inProgressRuns = 0, rateFallbackJobs = 0, countedJobs = 0, totalMinutes = 0, totalCost = 0;
@@ -323,6 +347,15 @@ function buildReport(repo, runs, jobsByRun, cfg, days) {
     rateFallbackJobs,
     evidence,
     provenance: {
+      repoVisibility: repoVis,
+      billedEvenIfPublic: (() => {
+        let jobs = 0, cost = 0;
+        for (const e of evidence) {
+          if (e.sku === 'actions_macos' || e.sku === 'macos_l' || e.sku === 'macos_xl' ||
+              e.sku.endsWith('_gpu') || /\d+_core$/.test(e.sku)) { jobs++; cost += e.cost_usd; }
+        }
+        return { jobs, cost };
+      })(),
       dataSources: [
         `GET /repos/${repo}/actions/runs (workflow-run metadata)`,
         'GET /repos/{repo}/actions/runs/{id}/jobs (job metadata, latest attempt per job)',
@@ -369,6 +402,8 @@ function renderTable(rep) {
     for (const w of rep.topWorkflowsByCost) L.push(`    ${money(w.cost).padStart(10)}  ${w.pctOfTotal.toFixed(1).padStart(5)}%  ${w.workflow}`);
   }
   if (rep.rateFallbackJobs > 0) L.push(`>>> honesty note: ${rep.rateFallbackJobs} jobs had unrecognized runner labels — priced at the standard Linux rate.`);
+  const vn = visibilityNotice(rep);
+  if (vn) L.push(vn);
   L.push('>>> List-price model: NOT your invoice. Included plan minutes are consumed first; hosted phase reconciles against the billing API.');
   return L.join('\n');
 }
@@ -397,6 +432,7 @@ ${wf}
 
 ### Where these numbers come from
 
+- **Repo visibility:** ${p.repoVisibility}${p.repoVisibility === 'public' ? ` — standard Linux/Windows hosted minutes are **free** for public repositories; the $ figures are the list-price value of this compute, not money owed${p.billedEvenIfPublic.jobs > 0 ? `. Exception: ${p.billedEvenIfPublic.jobs} macOS/larger-runner jobs are billed even for public repos (~$${p.billedEvenIfPublic.cost.toFixed(2)}).` : '.'}` : p.repoVisibility === 'private' ? ' — list-price model; included plan minutes are consumed before these amounts reach the invoice.' : ' (could not determine).'}
 - **Data:** ${p.dataSources[0]}; ${p.dataSources[1]}. ${p.neverAccessed}.
 - **Window:** last ${rep.window.days} days (${rep.window.from ?? '—'} → ${rep.window.to ?? '—'}), ${rep.runsAnalyzed} runs, ${rep.jobsCounted} of ${p.jobsFetched} fetched jobs counted (${p.inProgressExcluded} in-progress excluded).
 - **Attribution:** ${p.attribution}.
@@ -443,6 +479,7 @@ async function main() {
   const since = new Date(Date.now() - args.days * 86_400_000);
 
   let runs, jobsByRun;
+  let vis = 'unknown';
   if (args['fixture-dir']) {
     const dir = args['fixture-dir'];
     runs = JSON.parse(readFileSync(`${dir}/runs.json`, 'utf8'));
@@ -451,6 +488,7 @@ async function main() {
   } else {
     if (!args.repo) throw new Error('--repo owner/name (or GITHUB_REPOSITORY) required');
     const token = args.token || process.env.GITHUB_TOKEN;
+    vis = await repoVisibility(args.repo, token);
     runs = await listRuns(args.repo, since, token, args['max-runs']);
     jobsByRun = new Map();
     let done = 0;
@@ -460,7 +498,7 @@ async function main() {
     }
   }
 
-  const rep = buildReport(args.repo || '(fixture)', runs, jobsByRun, cfg, args.days);
+  const rep = buildReport(args.repo || '(fixture)', runs, jobsByRun, cfg, args.days, vis);
   console.log(renderTable(rep));
 
   if (args['json-file']) {
@@ -489,4 +527,4 @@ if (invokedDirectly) {
   main().catch(e => { console.error(`error: ${e.message}`); process.exit(1); });
 }
 
-export { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, norm };
+export { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, norm };
