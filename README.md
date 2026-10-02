@@ -130,7 +130,7 @@ Run it on a repo where you can see the Actions usage chart for the same window:
 ## Privacy & license
 
 The CLI reads workflow-run/job metadata via the public REST API and stores
-nothing anywhere. MIT — see [LICENSE](LICENSE). Accuracy is best-effort; see
+nothing anywhere. Apache-2.0 — see [LICENSE](LICENSE). Accuracy is best-effort; see
 the methodology above before quoting numbers to your CFO.
 
 [#192948]: https://github.com/orgs/community/discussions/192948
