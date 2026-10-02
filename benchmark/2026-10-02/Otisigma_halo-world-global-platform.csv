@@ -1,0 +1,200 @@
+run_id,run_number,workflow,event,actor_login,actor_type,class,job_id,job_name,started_at,completed_at,minutes,sku,rate_usd_per_min,cost_usd,runner_labels
+37001727640,873,CI,push,Otisigma,User,human,110820720477,Docker build & smoke test,2026-10-02T11:34:19Z,2026-10-02T11:34:41Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37001727640,873,CI,push,Otisigma,User,human,110820720803,AI + maintenance governance contracts,2026-10-02T11:34:19Z,2026-10-02T11:34:36Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37001727542,179,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110820719908,telemetry-artifact,2026-10-02T11:34:18Z,2026-10-02T11:34:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37001448241,413,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110819831562,copilot,2026-10-02T11:31:16Z,2026-10-02T11:40:07Z,9,actions_linux,0.006,0.054,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+37000637173,175,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110820866511,telemetry-artifact,2026-10-02T11:34:48Z,2026-10-02T11:34:54Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37000636926,869,CI,pull_request,Otisigma,User,human,110820866678,AI + maintenance governance contracts,2026-10-02T11:34:48Z,2026-10-02T11:35:03Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37000636926,869,CI,pull_request,Otisigma,User,human,110820867013,Docker build & smoke test,2026-10-02T11:34:50Z,2026-10-02T11:35:41Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37000380696,174,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110820561487,telemetry-artifact,2026-10-02T11:33:47Z,2026-10-02T11:33:54Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37000380531,868,CI,pull_request,Otisigma,User,human,110820558997,AI + maintenance governance contracts,2026-10-02T11:33:47Z,2026-10-02T11:34:03Z,1,actions_linux,0.006,0.006,ubuntu-latest
+37000380531,868,CI,pull_request,Otisigma,User,human,110820559271,Docker build & smoke test,2026-10-02T11:33:45Z,2026-10-02T11:34:01Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36999980999,411,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110815220729,copilot,2026-10-02T11:15:16Z,2026-10-02T11:25:51Z,11,actions_linux,0.006,0.066,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36999898288,410,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110814959003,copilot,2026-10-02T11:14:23Z,2026-10-02T11:22:59Z,9,actions_linux,0.006,0.054,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36998942795,171,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110811950279,telemetry-artifact,2026-10-02T11:04:02Z,2026-10-02T11:04:11Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36998942794,865,CI,push,Otisigma,User,human,110811949532,AI + maintenance governance contracts,2026-10-02T11:04:01Z,2026-10-02T11:04:16Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36998942794,865,CI,push,Otisigma,User,human,110811949775,Docker build & smoke test,2026-10-02T11:04:02Z,2026-10-02T11:04:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997960894,864,CI,push,Otisigma,User,human,110808906820,Docker build & smoke test,2026-10-02T10:53:22Z,2026-10-02T10:53:44Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997960894,864,CI,push,Otisigma,User,human,110808907096,AI + maintenance governance contracts,2026-10-02T10:53:22Z,2026-10-02T10:53:37Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997960831,170,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110808906964,telemetry-artifact,2026-10-02T10:53:21Z,2026-10-02T10:53:28Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997842322,863,CI,pull_request,Otisigma,User,human,110808588821,Docker build & smoke test,2026-10-02T10:52:16Z,2026-10-02T10:52:37Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997842322,863,CI,pull_request,Otisigma,User,human,110808589146,AI + maintenance governance contracts,2026-10-02T10:52:16Z,2026-10-02T10:52:35Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997842097,169,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110808586314,telemetry-artifact,2026-10-02T10:52:15Z,2026-10-02T10:52:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36997419770,409,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110807224465,copilot,2026-10-02T10:47:34Z,2026-10-02T10:54:05Z,7,actions_linux,0.006,0.042,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36995941147,408,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110802546891,copilot,2026-10-02T10:31:34Z,2026-10-02T10:41:09Z,10,actions_linux,0.006,0.06,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36995673971,167,Telemetry artifact and optional Netlify deploy,pull_request,netlify-coding[bot],Bot,bot,110801708667,telemetry-artifact,2026-10-02T10:28:39Z,2026-10-02T10:28:46Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36995673857,861,CI,pull_request,netlify-coding[bot],Bot,bot,110801708688,AI + maintenance governance contracts,2026-10-02T10:28:38Z,2026-10-02T10:28:55Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36995673857,861,CI,pull_request,netlify-coding[bot],Bot,bot,110801708919,Docker build & smoke test,2026-10-02T10:28:38Z,2026-10-02T10:28:53Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36994742873,166,Telemetry artifact and optional Netlify deploy,pull_request,netlify-coding[bot],Bot,bot,110798767202,telemetry-artifact,2026-10-02T10:18:31Z,2026-10-02T10:18:39Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36994742803,860,CI,pull_request,netlify-coding[bot],Bot,bot,110798766583,Docker build & smoke test,2026-10-02T10:19:07Z,2026-10-02T10:19:22Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36994742803,860,CI,pull_request,netlify-coding[bot],Bot,bot,110798767009,AI + maintenance governance contracts,2026-10-02T10:18:31Z,2026-10-02T10:18:48Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36993463239,407,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110794727082,copilot,2026-10-02T10:04:54Z,2026-10-02T10:05:53Z,1,actions_linux,0.006,0.006,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36989828792,165,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110783187302,telemetry-artifact,2026-10-02T09:26:58Z,2026-10-02T09:27:03Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36989828768,859,CI,push,Otisigma,User,human,110783187034,AI + maintenance governance contracts,2026-10-02T09:26:59Z,2026-10-02T09:27:14Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36989828768,859,CI,push,Otisigma,User,human,110783187342,Docker build & smoke test,2026-10-02T09:26:58Z,2026-10-02T09:27:16Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36989626151,858,CI,pull_request,Otisigma,User,human,110782736008,AI + maintenance governance contracts,2026-10-02T09:25:31Z,2026-10-02T09:25:49Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36989626151,858,CI,pull_request,Otisigma,User,human,110782736215,Docker build & smoke test,2026-10-02T09:25:31Z,2026-10-02T09:25:51Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36989626089,406,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110782548288,copilot,2026-10-02T09:24:56Z,2026-10-02T09:27:41Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36989626074,164,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110782732167,telemetry-artifact,2026-10-02T09:25:30Z,2026-10-02T09:25:38Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36969828696,405,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110721285907,copilot,2026-10-02T05:38:22Z,2026-10-02T05:40:35Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36967447780,857,CI,push,Otisigma,User,human,110714157064,Docker build & smoke test,2026-10-02T05:06:21Z,2026-10-02T05:06:37Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967447780,857,CI,push,Otisigma,User,human,110714157473,AI + maintenance governance contracts,2026-10-02T05:06:21Z,2026-10-02T05:06:36Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967447738,163,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110714157166,telemetry-artifact,2026-10-02T05:06:21Z,2026-10-02T05:06:27Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967350082,162,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110713867726,telemetry-artifact,2026-10-02T05:05:02Z,2026-10-02T05:05:10Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967350077,856,CI,push,Otisigma,User,human,110713867261,AI + maintenance governance contracts,2026-10-02T05:05:02Z,2026-10-02T05:05:16Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967350077,856,CI,push,Otisigma,User,human,110713867452,Docker build & smoke test,2026-10-02T05:05:02Z,2026-10-02T05:05:33Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967210784,855,CI,push,Otisigma,User,human,110713445787,Docker build & smoke test,2026-10-02T05:03:06Z,2026-10-02T05:03:27Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967210784,855,CI,push,Otisigma,User,human,110713446008,AI + maintenance governance contracts,2026-10-02T05:03:07Z,2026-10-02T05:03:22Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36967210764,161,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110713446064,telemetry-artifact,2026-10-02T05:03:07Z,2026-10-02T05:03:13Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966971922,160,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110713970328,telemetry-artifact,2026-10-02T05:05:31Z,2026-10-02T05:05:38Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966971900,854,CI,pull_request,Otisigma,User,human,110713966961,Docker build & smoke test,2026-10-02T05:05:29Z,2026-10-02T05:05:45Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966971900,854,CI,pull_request,Otisigma,User,human,110713967129,AI + maintenance governance contracts,2026-10-02T05:05:30Z,2026-10-02T05:05:44Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966971077,404,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110712733204,copilot,2026-10-02T04:59:58Z,2026-10-02T05:03:00Z,4,actions_linux,0.006,0.024,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36966733764,403,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110712006239,copilot,2026-10-02T04:56:31Z,2026-10-02T04:59:37Z,4,actions_linux,0.006,0.024,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36966356817,853,CI,pull_request,Otisigma,User,human,110713694949,Docker build & smoke test,2026-10-02T05:04:16Z,2026-10-02T05:04:41Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966356817,853,CI,pull_request,Otisigma,User,human,110713695212,AI + maintenance governance contracts,2026-10-02T05:04:16Z,2026-10-02T05:04:34Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966356742,159,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110713694155,telemetry-artifact,2026-10-02T05:04:16Z,2026-10-02T05:04:27Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966355586,402,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110710864344,copilot,2026-10-02T04:51:18Z,2026-10-02T04:53:28Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36966233713,158,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110713327446,telemetry-artifact,2026-10-02T05:02:33Z,2026-10-02T05:02:41Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966233559,852,CI,pull_request,Otisigma,User,human,110713324596,AI + maintenance governance contracts,2026-10-02T05:02:33Z,2026-10-02T05:02:47Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966233559,852,CI,pull_request,Otisigma,User,human,110713324927,Docker build & smoke test,2026-10-02T05:02:33Z,2026-10-02T05:02:51Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36966233299,401,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110710494449,copilot,2026-10-02T04:49:39Z,2026-10-02T04:52:03Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36964743948,400,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110705930659,copilot,2026-10-02T04:29:06Z,2026-10-02T04:31:09Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36964357818,399,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110704747925,copilot,2026-10-02T04:23:46Z,2026-10-02T04:26:35Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36963635757,851,CI,push,Otisigma,User,human,110702534854,Docker build & smoke test,2026-10-02T04:13:59Z,2026-10-02T04:14:16Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36963635757,851,CI,push,Otisigma,User,human,110702535074,AI + maintenance governance contracts,2026-10-02T04:13:59Z,2026-10-02T04:14:13Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36963635754,157,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110702535360,telemetry-artifact,2026-10-02T04:14:00Z,2026-10-02T04:14:10Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36963279486,156,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110701919974,telemetry-artifact,2026-10-02T04:11:17Z,2026-10-02T04:11:22Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36963279358,850,CI,pull_request,Otisigma,User,human,110701919314,Docker build & smoke test,2026-10-02T04:11:17Z,2026-10-02T04:11:35Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36963279358,850,CI,pull_request,Otisigma,User,human,110701919422,AI + maintenance governance contracts,2026-10-02T04:11:17Z,2026-10-02T04:11:29Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962970699,398,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110700481456,copilot,2026-10-02T04:05:00Z,2026-10-02T04:10:48Z,6,actions_linux,0.006,0.036000000000000004,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36962818503,848,CI,push,Otisigma,User,human,110700013682,Docker build & smoke test,2026-10-02T04:02:55Z,2026-10-02T04:03:10Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962818503,848,CI,push,Otisigma,User,human,110700013737,AI + maintenance governance contracts,2026-10-02T04:02:55Z,2026-10-02T04:03:06Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962818483,154,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110700014078,telemetry-artifact,2026-10-02T04:02:55Z,2026-10-02T04:03:01Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962551893,153,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110699821647,telemetry-artifact,2026-10-02T04:02:05Z,2026-10-02T04:02:14Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962551885,847,CI,pull_request,Otisigma,User,human,110699819756,Docker build & smoke test,2026-10-02T04:02:04Z,2026-10-02T04:02:22Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962551885,847,CI,pull_request,Otisigma,User,human,110699819947,AI + maintenance governance contracts,2026-10-02T04:02:04Z,2026-10-02T04:02:21Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36962096462,397,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110697787972,copilot,2026-10-02T03:52:57Z,2026-10-02T04:01:10Z,9,actions_linux,0.006,0.054,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36958268505,151,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110686018182,telemetry-artifact,2026-10-02T03:01:10Z,2026-10-02T03:01:18Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36958268491,845,CI,push,Otisigma,User,human,110686017550,Docker build & smoke test,2026-10-02T03:01:10Z,2026-10-02T03:01:30Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36958268491,845,CI,push,Otisigma,User,human,110686017764,AI + maintenance governance contracts,2026-10-02T03:01:10Z,2026-10-02T03:01:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36957825024,844,CI,pull_request,Otisigma,User,human,110685176985,AI + maintenance governance contracts,2026-10-02T02:57:32Z,2026-10-02T02:57:49Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36957825024,844,CI,pull_request,Otisigma,User,human,110685177104,Docker build & smoke test,2026-10-02T02:57:32Z,2026-10-02T02:57:47Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36957824910,150,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110685176613,telemetry-artifact,2026-10-02T02:57:32Z,2026-10-02T02:57:36Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36957497131,396,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110683632587,copilot,2026-10-02T02:50:51Z,2026-10-02T02:56:40Z,6,actions_linux,0.006,0.036000000000000004,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36956315685,395,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110679933989,copilot,2026-10-02T02:35:18Z,2026-10-02T02:37:35Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36956204158,147,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110679583284,telemetry-artifact,2026-10-02T02:33:48Z,2026-10-02T02:33:56Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36956204130,841,CI,push,Otisigma,User,human,110679582958,Docker build & smoke test,2026-10-02T02:33:48Z,2026-10-02T02:34:05Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36956204130,841,CI,push,Otisigma,User,human,110679583141,AI + maintenance governance contracts,2026-10-02T02:33:48Z,2026-10-02T02:34:00Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954830810,146,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110675372621,telemetry-artifact,2026-10-02T02:16:06Z,2026-10-02T02:16:13Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954830795,840,CI,push,Otisigma,User,human,110675372186,AI + maintenance governance contracts,2026-10-02T02:16:05Z,2026-10-02T02:16:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954830795,840,CI,push,Otisigma,User,human,110675372526,Docker build & smoke test,2026-10-02T02:16:06Z,2026-10-02T02:16:27Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954720630,394,Addressing comment on PR #263,dynamic,Copilot,Bot,agent,110675040306,copilot,2026-10-02T02:14:46Z,2026-10-02T02:16:08Z,2,actions_linux,0.006,0.012,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36954681115,839,CI,pull_request,Otisigma,User,human,110675166491,AI + maintenance governance contracts,2026-10-02T02:15:16Z,2026-10-02T02:15:31Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954681115,839,CI,pull_request,Otisigma,User,human,110675166658,Docker build & smoke test,2026-10-02T02:15:17Z,2026-10-02T02:15:37Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954681104,145,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110675165138,telemetry-artifact,2026-10-02T02:15:16Z,2026-10-02T02:15:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954562750,393,Addressing comment on PR #263,dynamic,Copilot,Bot,agent,110674565150,copilot,2026-10-02T02:12:47Z,2026-10-02T02:14:34Z,2,actions_linux,0.006,0.012,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36954457728,838,CI,push,Otisigma,User,human,110674233861,Docker build & smoke test,2026-10-02T02:11:22Z,2026-10-02T02:11:40Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954457728,838,CI,push,Otisigma,User,human,110674234201,AI + maintenance governance contracts,2026-10-02T02:11:22Z,2026-10-02T02:11:37Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954457695,144,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110674233798,telemetry-artifact,2026-10-02T02:11:22Z,2026-10-02T02:11:29Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954205108,837,CI,pull_request,Otisigma,User,human,110674320429,Docker build & smoke test,2026-10-02T02:11:45Z,2026-10-02T02:12:08Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954205108,837,CI,pull_request,Otisigma,User,human,110674320575,AI + maintenance governance contracts,2026-10-02T02:11:44Z,2026-10-02T02:12:00Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954205107,143,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110674320465,telemetry-artifact,2026-10-02T02:11:44Z,2026-10-02T02:11:50Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954151057,142,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110674054409,telemetry-artifact,2026-10-02T02:10:38Z,2026-10-02T02:10:45Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954151056,836,CI,pull_request,Otisigma,User,human,110674052587,Docker build & smoke test,2026-10-02T02:10:39Z,2026-10-02T02:11:02Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36954151056,836,CI,pull_request,Otisigma,User,human,110674052806,AI + maintenance governance contracts,2026-10-02T02:10:37Z,2026-10-02T02:10:51Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36953914206,392,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110672563003,copilot,2026-10-02T02:04:28Z,2026-10-02T02:08:39Z,5,actions_linux,0.006,0.03,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36953860264,391,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110672404422,copilot,2026-10-02T02:03:48Z,2026-10-02T02:08:36Z,5,actions_linux,0.006,0.03,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36953022933,390,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110669880232,copilot,2026-10-02T01:53:00Z,2026-10-02T01:54:56Z,2,actions_linux,0.006,0.012,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36952513174,139,Telemetry artifact and optional Netlify deploy,pull_request,netlify-coding[bot],Bot,bot,110668313109,telemetry-artifact,2026-10-02T01:46:50Z,2026-10-02T01:46:57Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36952513152,833,CI,pull_request,netlify-coding[bot],Bot,bot,110668312160,Docker build & smoke test,2026-10-02T01:46:13Z,2026-10-02T01:46:29Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36952513152,833,CI,pull_request,netlify-coding[bot],Bot,bot,110668312370,AI + maintenance governance contracts,2026-10-02T01:46:13Z,2026-10-02T01:46:26Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36951964796,832,CI,pull_request,netlify-coding[bot],Bot,bot,110666646700,AI + maintenance governance contracts,2026-10-02T01:39:21Z,2026-10-02T01:39:35Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36951964796,832,CI,pull_request,netlify-coding[bot],Bot,bot,110666646856,Docker build & smoke test,2026-10-02T01:39:21Z,2026-10-02T01:39:43Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36951964735,138,Telemetry artifact and optional Netlify deploy,pull_request,netlify-coding[bot],Bot,bot,110666646296,telemetry-artifact,2026-10-02T01:39:21Z,2026-10-02T01:39:29Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36943418418,831,CI,push,Otisigma,User,human,110639934818,Docker build & smoke test,2026-10-01T23:56:23Z,2026-10-01T23:56:44Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36943418418,831,CI,push,Otisigma,User,human,110639934909,AI + maintenance governance contracts,2026-10-01T23:56:59Z,2026-10-01T23:57:13Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36943418357,137,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110639934761,telemetry-artifact,2026-10-01T23:56:23Z,2026-10-01T23:56:28Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36942954448,136,Telemetry artifact and optional Netlify deploy,pull_request,netlify-coding[bot],Bot,bot,110638459170,telemetry-artifact,2026-10-01T23:50:54Z,2026-10-01T23:51:00Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36942954348,830,CI,pull_request,netlify-coding[bot],Bot,bot,110638458660,Docker build & smoke test,2026-10-01T23:50:54Z,2026-10-01T23:51:20Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36942954348,830,CI,pull_request,netlify-coding[bot],Bot,bot,110638458814,AI + maintenance governance contracts,2026-10-01T23:50:54Z,2026-10-01T23:51:06Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36941980283,135,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110639044082,telemetry-artifact,2026-10-01T23:53:02Z,2026-10-01T23:53:15Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36941980260,829,CI,pull_request,Otisigma,User,human,110639041810,Docker build & smoke test,2026-10-01T23:53:02Z,2026-10-01T23:53:19Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36941980260,829,CI,pull_request,Otisigma,User,human,110639042050,AI + maintenance governance contracts,2026-10-01T23:53:02Z,2026-10-01T23:53:16Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36941524100,389,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110633890429,copilot,2026-10-01T23:34:32Z,2026-10-01T23:41:26Z,7,actions_linux,0.006,0.042,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36940021769,133,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110629100961,telemetry-artifact,2026-10-01T23:17:49Z,2026-10-01T23:17:56Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36940021756,827,CI,push,Otisigma,User,human,110629100688,Docker build & smoke test,2026-10-01T23:17:48Z,2026-10-01T23:18:04Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36940021756,827,CI,push,Otisigma,User,human,110629100821,AI + maintenance governance contracts,2026-10-01T23:17:49Z,2026-10-01T23:18:05Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36939680645,132,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110628572726,telemetry-artifact,2026-10-01T23:16:03Z,2026-10-01T23:16:10Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36939680475,826,CI,pull_request,Otisigma,User,human,110628576829,AI + maintenance governance contracts,2026-10-01T23:16:04Z,2026-10-01T23:16:19Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36939680475,826,CI,pull_request,Otisigma,User,human,110628577120,Docker build & smoke test,2026-10-01T23:16:05Z,2026-10-01T23:16:30Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36939411623,388,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110627156875,copilot,2026-10-01T23:11:19Z,2026-10-01T23:15:28Z,5,actions_linux,0.006,0.03,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36938358925,824,CI,push,Otisigma,User,human,110623836069,AI + maintenance governance contracts,2026-10-01T23:00:18Z,2026-10-01T23:00:31Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36938358925,824,CI,push,Otisigma,User,human,110623836266,Docker build & smoke test,2026-10-01T23:00:18Z,2026-10-01T23:00:36Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36938358898,130,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110623836685,telemetry-artifact,2026-10-01T23:00:19Z,2026-10-01T23:00:28Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36936993455,129,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110621072269,telemetry-artifact,2026-10-01T22:51:03Z,2026-10-01T22:51:11Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36936993420,823,CI,pull_request,Otisigma,User,human,110621068283,AI + maintenance governance contracts,2026-10-01T22:51:02Z,2026-10-01T22:51:17Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36936993420,823,CI,pull_request,Otisigma,User,human,110621068491,Docker build & smoke test,2026-10-01T22:51:02Z,2026-10-01T22:51:17Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36936080153,387,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110616554784,copilot,2026-10-01T22:36:40Z,2026-10-01T22:47:07Z,11,actions_linux,0.006,0.066,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36902807916,126,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110505844871,telemetry-artifact,2026-10-01T17:54:05Z,2026-10-01T17:54:11Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36902807669,820,CI,push,Otisigma,User,human,110505843451,AI + maintenance governance contracts,2026-10-01T17:54:03Z,2026-10-01T17:54:21Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36902807669,820,CI,push,Otisigma,User,human,110505843903,Docker build & smoke test,2026-10-01T17:54:05Z,2026-10-01T17:54:31Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36902038697,125,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110504989153,telemetry-artifact,2026-10-01T17:52:01Z,2026-10-01T17:52:08Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36902038624,819,CI,pull_request,Otisigma,User,human,110504986149,AI + maintenance governance contracts,2026-10-01T17:52:03Z,2026-10-01T17:52:20Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36902038624,819,CI,pull_request,Otisigma,User,human,110504986765,Docker build & smoke test,2026-10-01T17:52:02Z,2026-10-01T17:52:23Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36901222896,386,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110500603781,copilot,2026-10-01T17:41:28Z,2026-10-01T17:49:45Z,9,actions_linux,0.006,0.054,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36900668163,817,CI,push,Otisigma,User,human,110498717789,Docker build & smoke test,2026-10-01T17:36:53Z,2026-10-01T17:37:18Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36900668163,817,CI,push,Otisigma,User,human,110498718468,AI + maintenance governance contracts,2026-10-01T17:36:53Z,2026-10-01T17:37:08Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36900668070,123,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110498724580,telemetry-artifact,2026-10-01T17:36:55Z,2026-10-01T17:37:04Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36900075772,122,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110498456718,telemetry-artifact,2026-10-01T17:36:15Z,2026-10-01T17:36:22Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36900075643,816,CI,pull_request,Otisigma,User,human,110498450325,AI + maintenance governance contracts,2026-10-01T17:36:14Z,2026-10-01T17:36:30Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36900075643,816,CI,pull_request,Otisigma,User,human,110498450866,Docker build & smoke test,2026-10-01T17:36:13Z,2026-10-01T17:36:31Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36899451000,385,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110494666148,copilot,2026-10-01T17:27:04Z,2026-10-01T17:33:58Z,7,actions_linux,0.006,0.042,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36895452740,814,CI,push,Otisigma,User,human,110481169978,Docker build & smoke test,2026-10-01T16:54:21Z,2026-10-01T16:54:52Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36895452740,814,CI,push,Otisigma,User,human,110481170334,AI + maintenance governance contracts,2026-10-01T16:54:21Z,2026-10-01T16:54:35Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36895452640,120,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110481169860,telemetry-artifact,2026-10-01T16:54:21Z,2026-10-01T16:54:30Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36895312396,384,Addressing comment on PR #253,dynamic,Copilot,Bot,agent,110480708849,copilot,2026-10-01T16:53:14Z,2026-10-01T16:54:24Z,2,actions_linux,0.006,0.012,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36894252694,812,CI,push,Otisigma,User,human,110477142169,Docker build & smoke test,2026-10-01T16:44:31Z,2026-10-01T16:44:51Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36894252694,812,CI,push,Otisigma,User,human,110477142711,AI + maintenance governance contracts,2026-10-01T16:44:31Z,2026-10-01T16:44:45Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36894252615,118,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,110477142716,telemetry-artifact,2026-10-01T16:44:33Z,2026-10-01T16:44:39Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36892938975,811,CI,pull_request,Otisigma,User,human,110476863894,AI + maintenance governance contracts,2026-10-01T16:43:51Z,2026-10-01T16:44:05Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36892938975,811,CI,pull_request,Otisigma,User,human,110476863941,Docker build & smoke test,2026-10-01T16:43:50Z,2026-10-01T16:44:09Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36892938933,117,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,110476862687,telemetry-artifact,2026-10-01T16:43:51Z,2026-10-01T16:43:58Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36891875115,383,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,110469233182,copilot,2026-10-01T16:25:32Z,2026-10-01T16:35:47Z,11,actions_linux,0.006,0.066,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36724035020,114,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,109967032496,telemetry-artifact,2026-09-30T15:41:48Z,2026-09-30T15:41:52Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36724034862,808,CI,pull_request,Otisigma,User,human,109967026180,Docker build & smoke test,2026-09-30T15:41:46Z,2026-09-30T15:42:08Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36724034862,808,CI,pull_request,Otisigma,User,human,109967026482,AI + maintenance governance contracts,2026-09-30T15:41:49Z,2026-09-30T15:42:06Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36723372132,382,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109913904756,copilot,2026-09-30T13:40:43Z,2026-09-30T13:47:33Z,7,actions_linux,0.006,0.042,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36663514007,805,CI,push,Otisigma,User,human,109723178225,Docker build & smoke test,2026-09-30T03:14:38Z,2026-09-30T03:14:56Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36663514007,805,CI,push,Otisigma,User,human,109723178551,AI + maintenance governance contracts,2026-09-30T03:14:39Z,2026-09-30T03:14:57Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36663514004,111,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,109723177870,telemetry-artifact,2026-09-30T03:14:38Z,2026-09-30T03:14:45Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36660228357,804,CI,pull_request,Otisigma,User,human,109714182661,AI + maintenance governance contracts,2026-09-30T02:35:51Z,2026-09-30T02:36:06Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36660228357,804,CI,pull_request,Otisigma,User,human,109714182748,Docker build & smoke test,2026-09-30T02:35:53Z,2026-09-30T02:36:11Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36660228309,110,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,109714180250,telemetry-artifact,2026-09-30T02:35:52Z,2026-09-30T02:35:59Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36659378073,381,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109710529314,copilot,2026-09-30T02:20:23Z,2026-09-30T02:34:44Z,15,actions_linux,0.006,0.09,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36659000481,108,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,109709365150,telemetry-artifact,2026-09-30T02:15:30Z,2026-09-30T02:15:35Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36659000410,802,CI,push,Otisigma,User,human,109709364494,AI + maintenance governance contracts,2026-09-30T02:15:30Z,2026-09-30T02:15:44Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36659000410,802,CI,push,Otisigma,User,human,109709364652,Docker build & smoke test,2026-09-30T02:15:30Z,2026-09-30T02:15:53Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36658655264,380,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109708328570,copilot,2026-09-30T02:11:14Z,2026-09-30T02:13:44Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36657591435,107,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,109705162360,telemetry-artifact,2026-09-30T01:57:58Z,2026-09-30T01:58:03Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36657591421,801,CI,push,Otisigma,User,human,109705162128,Docker build & smoke test,2026-09-30T01:57:58Z,2026-09-30T01:58:17Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36657591421,801,CI,push,Otisigma,User,human,109705162397,AI + maintenance governance contracts,2026-09-30T01:57:58Z,2026-09-30T01:58:13Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36657397511,379,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109704586352,copilot,2026-09-30T01:55:27Z,2026-09-30T01:58:22Z,3,actions_linux,0.006,0.018000000000000002,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36657216659,106,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,109704932829,telemetry-artifact,2026-09-30T01:56:57Z,2026-09-30T01:57:03Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36657216564,800,CI,pull_request,Otisigma,User,human,109704929791,AI + maintenance governance contracts,2026-09-30T01:56:57Z,2026-09-30T01:57:11Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36657216564,800,CI,pull_request,Otisigma,User,human,109704930043,Docker build & smoke test,2026-09-30T01:56:57Z,2026-09-30T01:57:18Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36657213481,378,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109704028514,copilot,2026-09-30T01:53:04Z,2026-09-30T01:58:22Z,6,actions_linux,0.006,0.036000000000000004,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36654887487,105,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,109696973600,telemetry-artifact,2026-09-30T01:23:38Z,2026-09-30T01:23:45Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36654887427,799,CI,push,Otisigma,User,human,109696973240,Docker build & smoke test,2026-09-30T01:23:36Z,2026-09-30T01:23:54Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36654887427,799,CI,push,Otisigma,User,human,109696973444,AI + maintenance governance contracts,2026-09-30T01:23:36Z,2026-09-30T01:23:50Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36654638844,104,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,109696742745,telemetry-artifact,2026-09-30T01:22:40Z,2026-09-30T01:22:46Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36654638842,798,CI,pull_request,Otisigma,User,human,109696742024,AI + maintenance governance contracts,2026-09-30T01:22:41Z,2026-09-30T01:22:56Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36654638842,798,CI,pull_request,Otisigma,User,human,109696742355,Docker build & smoke test,2026-09-30T01:22:45Z,2026-09-30T01:23:00Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36654304713,377,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109695145076,copilot,2026-09-30T01:16:21Z,2026-09-30T01:22:09Z,6,actions_linux,0.006,0.036000000000000004,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3
+36652801080,102,Telemetry artifact and optional Netlify deploy,push,Otisigma,User,human,109690553175,telemetry-artifact,2026-09-30T00:57:40Z,2026-09-30T00:57:47Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36652801059,796,CI,push,Otisigma,User,human,109690552607,Docker build & smoke test,2026-09-30T00:57:39Z,2026-09-30T00:57:55Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36652801059,796,CI,push,Otisigma,User,human,109690552852,AI + maintenance governance contracts,2026-09-30T00:57:39Z,2026-09-30T00:57:55Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36651669288,795,CI,pull_request,Otisigma,User,human,109689664030,Docker build & smoke test,2026-09-30T00:54:05Z,2026-09-30T00:54:25Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36651669288,795,CI,pull_request,Otisigma,User,human,109689664231,AI + maintenance governance contracts,2026-09-30T00:54:05Z,2026-09-30T00:54:22Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36651669216,101,Telemetry artifact and optional Netlify deploy,pull_request,Otisigma,User,human,109689662632,telemetry-artifact,2026-09-30T00:54:41Z,2026-09-30T00:54:45Z,1,actions_linux,0.006,0.006,ubuntu-latest
+36651232002,376,Running Copilot cloud agent,dynamic,Copilot,Bot,agent,109685597538,copilot,2026-09-30T00:37:33Z,2026-09-30T00:45:45Z,9,actions_linux,0.006,0.054,ubuntu-cca-77785908-7ef3-498a-9ae0-bbebb95125d3

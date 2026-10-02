@@ -1,5 +1,12 @@
 # Фаза A — GTM-заготовки (публикация руками владельца аккаунтов)
 
+## Боеприпасы из кейсов (вставлять в посты ссылками)
+
+Полная страница: `benchmark/cases.md` (в репо). Три кейса, каждый проверяем кликом:
+1. **github/gh-aw** — у самого GitHub агенты = 53.5% ранов / 28.8% трат за день; пример рана: https://github.com/github/gh-aw/actions/runs/36993383799 (Copilot чинит PR #64994).
+2. **Otisigma/halo-world** — соло-мейнтейнер: агенты = 46% ранов / 57% трат; живой воркфлоу "Running Copilot cloud agent": https://github.com/Otisigma/halo-world-global-platform/actions/runs/37001448241 (+ PRs #276–278).
+3. **microsoft/vscode** — «публичный ≠ бесплатный»: 89% ценности дня ($123.61) — macOS-раннеры, платные даже для публичных репо: https://github.com/microsoft/vscode/actions/runs/37000636285
+
 ## Show HN (после публикации репо)
 
 **Title:** Show HN: costgrep – GitHub Actions spend, split human vs AI agent vs bot
