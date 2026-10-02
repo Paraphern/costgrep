@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "GitHub Actions cost breakdown: human vs AI agent vs bot. Zero-dependency CLI + composite action.",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": { "costgrep": "scripts/costgrep.mjs" },
   "scripts": {
     "test": "node --test"

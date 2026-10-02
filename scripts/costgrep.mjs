@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 /**
  * costgrep — GitHub Actions cost breakdown: human vs AI-agent vs bot.
  *
