@@ -51,13 +51,21 @@ runs:
     - name: 'costgrep: human vs agent vs bot CI spend'
       shell: bash
       env:
+        # All user-controllable inputs go through env, never via ${{ }} inline in
+        # bash — script-injection hardening per GitHub's security guide.
         CG_TOKEN: ${{ inputs.token }}
         CG_REPO: ${{ github.repository }}
+        CG_DAYS: ${{ inputs.days }}
+        CG_MAX_RUNS: ${{ inputs.max-runs }}
+        CG_JSON: ${{ inputs.json-file }}
+        CG_CSV: ${{ inputs.csv-file }}
+        CG_MD: ${{ inputs.md-file }}
+        CG_CONFIG: ${{ inputs.config }}
       run: |
-        ARGS=(--repo "$CG_REPO" --days "${{ inputs.days }}" --max-runs "${{ inputs.max-runs }}" --token "$CG_TOKEN" --json-file "${{ inputs.json-file }}" --gh-output "$GITHUB_OUTPUT" --step-summary)
-        if [ -n "${{ inputs.csv-file }}" ]; then ARGS+=(--csv-file "${{ inputs.csv-file }}"); fi
-        if [ -n "${{ inputs.md-file }}" ]; then ARGS+=(--md-file "${{ inputs.md-file }}"); fi
-        if [ -n "${{ inputs.config }}" ]; then ARGS+=(--config "${{ inputs.config }}"); fi
+        ARGS=(--repo "$CG_REPO" --days "$CG_DAYS" --max-runs "$CG_MAX_RUNS" --token "$CG_TOKEN" --json-file "$CG_JSON" --gh-output "$GITHUB_OUTPUT" --step-summary)
+        [ -n "$CG_CSV" ] && ARGS+=(--csv-file "$CG_CSV")
+        [ -n "$CG_MD" ] && ARGS+=(--md-file "$CG_MD")
+        [ -n "$CG_CONFIG" ] && ARGS+=(--config "$CG_CONFIG")
         node "${{ github.action_path }}/scripts/costgrep.mjs" "${ARGS[@]}"
 
 branding:

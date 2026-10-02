@@ -19,6 +19,10 @@ Agentic Workflows. **Window:** 200 runs on 2026-10-02 (one day).
 | humans | 83 | 41.5% | 65.2% |
 | bots | 10 | 5.0% | 6.0% |
 
+*Why run-share exceeds cost-share: most of the agent runs were still awaiting human
+approval (`action_required` — 0 jobs executed, 0 compute). The agent creates the runs;
+the minutes burn once they're approved.*
+
 **See it yourself:**
 - Agent run (raw check): [actions/runs/36993383799](https://github.com/github/gh-aw/actions/runs/36993383799)
   — workflow *"Addressing comment on PR #64994"*, `triggering_actor: Copilot`, job

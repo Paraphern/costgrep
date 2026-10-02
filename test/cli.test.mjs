@@ -168,6 +168,30 @@ test('outputs for the CI budget gate', () => {
   assert.equal(o['total-minutes'], '71');
 });
 
+test('skipped & zero-duration jobs: billed at the 1-min minimum, flagged as a subtrahend', () => {
+  const runs = [{
+    id: 9, name: 'CI', event: 'push', run_number: 9, created_at: '2026-09-25T00:00:00Z',
+    actor: { login: 'a-dev', type: 'User' }, triggering_actor: { login: 'a-dev', type: 'User' },
+    jobs: [
+      { id: 'sk', name: 'skippy', conclusion: 'skipped', started_at: '2026-09-25T00:00:00Z', completed_at: '2026-09-25T00:00:00Z', labels: ['ubuntu-latest'] },
+      { id: 'ok', name: 'normal', conclusion: 'success', started_at: '2026-09-25T00:00:00Z', completed_at: '2026-09-25T00:01:00Z', labels: ['ubuntu-latest'] },
+    ],
+  }];
+  const r = buildReport('x/y', runs, new Map(runs.map(x => [x.id, x.jobs])), cfg, 30);
+  assert.equal(r.skippedJobs, 1);
+  assert.equal(r.zeroDurationJobs, 1); // the skipped job is also zero-duration
+  approx(r.skippedCost, 0.006);
+  approx(r.totalCost, 0.012); // both jobs at the 1-min minimum
+  const t = renderTable(r);
+  assert.ok(t.includes('billed at the 1-min minimum'), t);
+  assert.ok(t.includes('$0.012 included'), t); // exact subtrahend surfaced
+});
+
+test('--repo is validated (owner/name only, no query/path tricks)', () => {
+  assert.throws(() => execFileSync(process.execPath, [CLI, '--repo', 'x?per_page=1#', '--days', '1'], { encoding: 'utf8', stdio: 'pipe' }), /invalid --repo/);
+  assert.throws(() => execFileSync(process.execPath, [CLI, '--repo', 'a/../../users/o', '--days', '1'], { encoding: 'utf8', stdio: 'pipe' }), /invalid --repo/);
+});
+
 test('visibility notice: a list-price figure must never read as money owed', () => {
   const mk = (repoVisibility, billed) => ({ provenance: { repoVisibility, billedEvenIfPublic: billed } });
   // public repo, only free runner classes: "you paid $0" must be unmissable
