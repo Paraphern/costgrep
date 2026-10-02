@@ -83,7 +83,10 @@ function parseCli() {
       'max-runs': { type: 'string', default: '1000' },
       config: { type: 'string' },          // JSON file: {agents, bots, rates}
       'fixture-dir': { type: 'string' },   // offline mode: runs.json with embedded jobs
-      'json-file': { type: 'string' },     // write full report JSON here
+      'json-file': { type: 'string' },     // write full report JSON here (incl. evidence[] + provenance)
+      'md-file': { type: 'string' },       // write shareable Markdown report with provenance block
+      'csv-file': { type: 'string' },      // write per-job evidence CSV (audit trail)
+      'gh-output': { type: 'string' },     // append KEY=VALUE outputs to this file (GitHub $GITHUB_OUTPUT)
       'step-summary': { type: 'boolean', default: false },
       quiet: { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
@@ -245,9 +248,13 @@ function buildReport(repo, runs, jobsByRun, cfg, days) {
   let inProgressRuns = 0, rateFallbackJobs = 0, countedJobs = 0, totalMinutes = 0, totalCost = 0;
   const byWorkflow = new Map(); // workflow name -> {class -> {cost, minutes}} (agent view)
   const byActor = new Map();
+  const evidence = []; // one row per billable job — the audit trail behind every aggregate
+  const jobsFetched = runs.reduce((s, r) => s + (jobsByRun.get(r.id) || []).length, 0);
 
   for (const run of runs) {
     const { login, klass } = classifyActor(run, cfg);
+    const src = run.triggering_actor?.login ? run.triggering_actor : run.actor;
+    const srcType = src?.type || '';
     const jobs = jobsByRun.get(run.id) || [];
     let runMinutes = 0, runCost = 0, anyJobCounted = false;
     for (const job of jobs) {
@@ -259,6 +266,13 @@ function buildReport(repo, runs, jobsByRun, cfg, days) {
       if (sku === 'self_hosted') { selfHosted.jobs++; selfHosted.minutes += mins; }
       const cost = mins * rate;
       runMinutes += mins; runCost += cost; countedJobs++; anyJobCounted = true;
+      evidence.push({
+        run_id: run.id, run_number: run.run_number ?? '', workflow: run.name || '(unnamed)',
+        event: run.event || '', actor_login: login, actor_type: srcType, class: klass,
+        job_id: job.id, job_name: job.name || '', started_at: job.started_at, completed_at: job.completed_at,
+        minutes: mins, sku, rate_usd_per_min: rate, cost_usd: cost,
+        runner_labels: (job.labels || []).join('|'),
+      });
       totalMinutes += mins; totalCost += cost;
       const wf = run.name || '(unnamed workflow)';
       if (!byWorkflow.has(wf)) byWorkflow.set(wf, { cost: 0, minutes: 0, runs: new Set() });
@@ -307,6 +321,21 @@ function buildReport(repo, runs, jobsByRun, cfg, days) {
     selfHosted,
     inProgressRuns,
     rateFallbackJobs,
+    evidence,
+    provenance: {
+      dataSources: [
+        `GET /repos/${repo}/actions/runs (workflow-run metadata)`,
+        'GET /repos/{repo}/actions/runs/{id}/jobs (job metadata, latest attempt per job)',
+      ],
+      neverAccessed: 'repository code, logs, secrets — workflow metadata only',
+      attribution: 'run.triggering_actor (fallback run.actor) -> agent | human | bot | unattributed',
+      rates: 'GitHub-hosted list prices effective 2026-01-01 — docs.github.com/en/billing/reference/actions-runner-pricing',
+      ratesVersion: '2026-01-01',
+      selfHostedPolicy: '$0/min while the $0.002 platform fee is postponed; minutes still counted',
+      jobsFetched,
+      inProgressExcluded: inProgressRuns,
+      deterministic: 'same repo + window -> same numbers',
+    },
   };
 }
 
@@ -351,6 +380,7 @@ function renderMarkdown(rep) {
     return `| ${k} | ${t.runs} | ${t.pctRuns.toFixed(1)}% | ${Math.round(t.minutes)} | ${money(t.cost)} | ${t.pctCost.toFixed(1)}% |`;
   }).join('\n');
   const wf = rep.topWorkflowsByCost.map(w => `| ${w.workflow} | ${money(w.cost)} | ${w.pctOfTotal.toFixed(1)}% |`).join('\n');
+  const p = rep.provenance;
   return `## 🤖 costgrep — ${rep.repo}
 
 **${money(a.cost)} from AI agents (${a.pctCost.toFixed(1)}% of CI spend)** · bot runs: ${rep.totals.bot.runs} (${rep.totals.bot.pctRuns.toFixed(1)}%)
@@ -365,8 +395,43 @@ Top workflows by cost:
 |---|---|---|
 ${wf}
 
-_List-price model (2026 rates), not the invoice. ${rep.rateFallbackJobs} jobs used the rate fallback.${rep.selfHosted.jobs ? ` ${rep.selfHosted.jobs} self-hosted jobs ($0).` : ''} Methodology: README._
+### Where these numbers come from
+
+- **Data:** ${p.dataSources[0]}; ${p.dataSources[1]}. ${p.neverAccessed}.
+- **Window:** last ${rep.window.days} days (${rep.window.from ?? '—'} → ${rep.window.to ?? '—'}), ${rep.runsAnalyzed} runs, ${rep.jobsCounted} of ${p.jobsFetched} fetched jobs counted (${p.inProgressExcluded} in-progress excluded).
+- **Attribution:** ${p.attribution}.
+- **Rates:** ${p.rates}. Self-hosted: ${p.selfHostedPolicy}.
+- **Honesty flags:** ${rep.rateFallbackJobs} jobs on the rate fallback (unknown runner labels → standard Linux rate); unattributed: ${rep.totals.unattributed.runs} runs.
+
+_List-price model — NOT the invoice: included plan minutes are consumed first. Deterministic: ${p.deterministic}. Verify any number against the per-job \`evidence[]\` in the JSON / CSV export. Full methodology: README._
 `;
+}
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+// Per-job audit trail: open it in any spreadsheet and recompute minutes x rate —
+// the sums must equal the headline totals.
+function renderCsv(rep) {
+  const cols = ['run_id', 'run_number', 'workflow', 'event', 'actor_login', 'actor_type', 'class',
+    'job_id', 'job_name', 'started_at', 'completed_at', 'minutes', 'sku', 'rate_usd_per_min', 'cost_usd', 'runner_labels'];
+  const lines = [cols.join(',')];
+  for (const e of rep.evidence) lines.push(cols.map(c => csvEscape(e[c])).join(','));
+  return lines.join('\n') + '\n';
+}
+
+function outputsFor(rep) {
+  return {
+    'total-cost': rep.totalCost.toFixed(4),
+    'total-minutes': String(Math.round(rep.totalMinutes)),
+    'agent-cost': rep.totals.agent.cost.toFixed(4),
+    'agent-share-pct': rep.totals.agent.pctCost.toFixed(1),
+    'agent-runs': String(rep.totals.agent.runs),
+    'bot-runs': String(rep.totals.bot.runs),
+    'bot-runs-pct': rep.totals.bot.pctRuns.toFixed(1),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -402,6 +467,17 @@ async function main() {
     writeFileSync(args['json-file'], JSON.stringify(rep, null, 2));
     console.error(`full report written to ${args['json-file']}`);
   }
+  if (args['md-file']) {
+    writeFileSync(args['md-file'], renderMarkdown(rep) + '\n');
+    console.error(`markdown report written to ${args['md-file']}`);
+  }
+  if (args['csv-file']) {
+    writeFileSync(args['csv-file'], renderCsv(rep));
+    console.error(`job-level evidence CSV written to ${args['csv-file']}`);
+  }
+  if (args['gh-output']) {
+    appendFileSync(args['gh-output'], Object.entries(outputsFor(rep)).map(([k, v]) => `${k}=${v}`).join('\n') + '\n');
+  }
   if (args['step-summary'] && process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, renderMarkdown(rep) + '\n');
   }
@@ -413,4 +489,4 @@ if (invokedDirectly) {
   main().catch(e => { console.error(`error: ${e.message}`); process.exit(1); });
 }
 
-export { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, norm };
+export { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, norm };

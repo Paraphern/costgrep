@@ -2,8 +2,9 @@ name: 'CostGrep'
 description: >-
   GitHub Actions cost breakdown by who triggered the run: human vs AI agent
   (Copilot, Claude, Codex, Cursor...) vs bot. List-price model, public
-  methodology, runs on your runner — no data leaves your infrastructure.
-author: 'agent-ci-finops'
+  methodology, per-job evidence trail, runs on your runner — no data leaves
+  your infrastructure.
+author: 'Paraphern'
 
 inputs:
   days:
@@ -21,6 +22,28 @@ inputs:
   json-file:
     description: 'Where to write the full JSON report (relative to workspace)'
     default: 'costgrep.json'
+  csv-file:
+    description: 'Optional: write per-job evidence CSV here (audit trail)'
+    default: ''
+  md-file:
+    description: 'Optional: write shareable Markdown report with provenance here'
+    default: ''
+
+outputs:
+  total-cost:
+    description: 'Total list-price CI spend, USD'
+  total-minutes:
+    description: 'Total billable minutes (rounded per job, like GitHub)'
+  agent-cost:
+    description: 'List-price spend attributed to AI agents, USD'
+  agent-share-pct:
+    description: 'Agents share of total CI spend, % (e.g. "6.8")'
+  agent-runs:
+    description: 'Workflow runs attributed to AI agents'
+  bot-runs:
+    description: 'Workflow runs attributed to bots'
+  bot-runs-pct:
+    description: 'Bot share of all runs, %'
 
 runs:
   using: 'composite'
@@ -28,10 +51,12 @@ runs:
     - name: 'costgrep: human vs agent vs bot CI spend'
       shell: bash
       env:
-        ACR_TOKEN: ${{ inputs.token }}
-        ACR_REPO: ${{ github.repository }}
+        CG_TOKEN: ${{ inputs.token }}
+        CG_REPO: ${{ github.repository }}
       run: |
-        ARGS=(--repo "$ACR_REPO" --days "${{ inputs.days }}" --max-runs "${{ inputs.max-runs }}" --token "$ACR_TOKEN" --json-file "${{ inputs.json-file }}" --step-summary)
+        ARGS=(--repo "$CG_REPO" --days "${{ inputs.days }}" --max-runs "${{ inputs.max-runs }}" --token "$CG_TOKEN" --json-file "${{ inputs.json-file }}" --gh-output "$GITHUB_OUTPUT" --step-summary)
+        if [ -n "${{ inputs.csv-file }}" ]; then ARGS+=(--csv-file "${{ inputs.csv-file }}"); fi
+        if [ -n "${{ inputs.md-file }}" ]; then ARGS+=(--md-file "${{ inputs.md-file }}"); fi
         if [ -n "${{ inputs.config }}" ]; then ARGS+=(--config "${{ inputs.config }}"); fi
         node "${{ github.action_path }}/scripts/costgrep.mjs" "${ARGS[@]}"
 

@@ -54,7 +54,8 @@ No org-admin rights, no billing access, no webhook — the repo-scoped
 
 ```bash
 node scripts/costgrep.mjs --repo owner/name [--days 30] [--token $GITHUB_TOKEN] \
-  [--max-runs 1000] [--config my-rules.json] [--json-file report.json] [--step-summary]
+  [--max-runs 1000] [--config my-rules.json] [--json-file report.json] \
+  [--csv-file evidence.csv] [--md-file report.md] [--step-summary]
 # offline demo on a bundled fixture:
 node scripts/costgrep.mjs --fixture-dir test/fixtures/demo-repo --days 4000
 ```
@@ -68,6 +69,48 @@ node scripts/costgrep.mjs --fixture-dir test/fixtures/demo-repo --days 4000
   "rates":  { "actions_linux": 0.006 }
 }
 ```
+
+## Outputs & budget gate
+
+The action exposes machine-readable outputs, so CI can *act* on the split —
+not just display it (per-actor budget enforcement GitHub's budgets API doesn't have):
+
+```yaml
+- id: costgrep
+  uses: Paraphern/costgrep@v1
+- name: Agent budget gate (fail when agents exceed 20% of CI spend)
+  if: fromJSON(steps.costgrep.outputs['agent-share-pct']) > 20
+  run: |
+    echo "::error::AI agents burned ${{ steps.costgrep.outputs['agent-cost'] }} \
+      (${{ steps.costgrep.outputs['agent-share-pct'] }}% of CI spend) — above the 20% budget"
+    exit 1
+```
+
+| output | meaning |
+|---|---|
+| `total-cost` / `total-minutes` | whole-window list-price spend / billable minutes |
+| `agent-cost` / `agent-share-pct` / `agent-runs` | the AI-agent slice |
+| `bot-runs` / `bot-runs-pct` | automation share of runs |
+
+## Evidence: every number is traceable
+
+Reports are self-describing — a human can check any figure against real API data:
+
+- **JSON** (`--json-file`): aggregates + `provenance` (which endpoints were called, the
+  exact window, fetched-vs-counted jobs, rates version, honesty flags) + `evidence[]` —
+  one row per billable job.
+- **CSV** (`--csv-file`): the same per-job rows for any spreadsheet: run, actor, class,
+  timestamps, minutes, SKU, rate, cost.
+- **Markdown** (`--md-file`): a shareable report with the provenance block baked in.
+
+Verify it yourself (that's the point):
+
+1. open the CSV and recompute `minutes × rate_usd_per_min` on any row — it matches `cost_usd`;
+2. sum `cost_usd` — it equals the headline totals;
+3. compare `minutes` against the GitHub usage UI for the same window (same per-job round-up);
+4. rerun costgrep on the same repo + window — the result is deterministic (latest job attempt only);
+5. spot-check any `run_id` via `gh api /repos/{repo}/actions/runs/{run_id}/jobs` — timestamps,
+   actor and labels in the CSV are the API's own values, unmodified.
 
 ## How it attributes (public methodology — zero invented precision)
 
