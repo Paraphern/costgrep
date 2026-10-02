@@ -151,15 +151,19 @@ Verify it yourself (that's the point):
    hosted phase). Expected accuracy vs a real invoice: **±5–10%**, which is
    exactly why the hosted product leads with reconciliation, not estimates.
 
-## Why not just…?
+## Why not just…? *(checked 2026-10)*
 
-| | actor/agent split | cost model | needs org admin |
-|---|---|---|---|
-| GitHub native usage views | ✗ (frozen since 21.07.2026, [#202838]) | invoice | — |
-| Datadog CI Visibility | git-author only | per-committer $ | yes |
-| Blacksmith Analytics | ✗ | minutes | no |
-| TrimCI | bots excluded from *billing* | failure cost | no |
-| **costgrep** | **human / agent / bot** | **list-price, reconciliation-ready** | **no** |
+| tool | human/agent/bot split | cost numbers it gives you | what you pay | needs org admin |
+|---|---|---|---|---|
+| GitHub native usage views | ✗ — no actor slice; org metrics [frozen since 21.07.2026](https://github.com/orgs/community/discussions/202838) | invoice-grade billing view | included in plan | view perms on billing |
+| Datadog CI Visibility | partial — git-author facet only, not trigger actor | span-based estimates | $8–12 / committer / mo | yes |
+| Blacksmith Analytics | ✗ (jobs / workflows / repos) | runner minutes | bundled with runners | no |
+| TrimCI | partial — bots excluded from *their* billing math; no AI-agent class | cost of CI failures | usage-based, per active contributor | no |
+| **costgrep** | **✓ human / AI agent / bot, re-runs attributed** | **list-price per 2026 SKU rates (invoice reconciliation = planned hosted phase, not yet)** | **nothing — free, open source (Apache-2.0)** | **no — repo token, `actions:read`** |
+
+**Money, stated plainly:** costgrep costs nothing and no paid tier exists today.
+Every `$` figure it prints is the *list-price value of compute* (see the notice in
+every report) — not money you owe GitHub and not money you pay us.
 
 ## Calibration case (do this first)
 
@@ -174,6 +178,10 @@ Run it on a repo where you can see the Actions usage chart for the same window:
    `rate fallback jobs` hits zero.
 
 ## Roadmap
+
+**This repo — the CLI and the composite action — is free and open source, permanently.**
+If a paid product ever appears, it will be the *hosted service* (continuous monitoring,
+invoice reconciliation), not this code.
 
 - **Phase B (hosted):** GitHub App + webhooks → org-wide dashboard, per-actor
   budgets/alerts, weekly digests.
