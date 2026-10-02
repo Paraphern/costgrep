@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = join(ROOT, 'scripts', 'costgrep.mjs');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'demo-repo');
 
 const mod = await import(`file://${CLI.replace(/\\/g, '/')}`);
-const { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, norm, DEFAULT_RATES } = mod;
+const { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, norm, DEFAULT_RATES } = mod;
 
 const run = (overrides = {}) => {
   const actor = overrides.actor ?? { login: 'x', type: 'User' };
@@ -120,11 +121,72 @@ test('renderers mention the headline numbers', () => {
   assert.ok(md.includes('| agent | 3 |'), md);
 });
 
-test('CLI end-to-end on fixture (offline mode)', () => {
-  const out = execFileSync(process.execPath,
-    [CLI, '--fixture-dir', FIXTURE, '--days', '4000', '--quiet'],
-    { encoding: 'utf8' });
-  assert.ok(out.includes('costgrep — (fixture)'), out);
-  assert.ok(out.includes('Agents cost $0.12'), out);
-  assert.ok(out.includes('Bot runs: 2 (25.0% of all runs)'), out);
+test('markdown carries a provenance block a human can follow', () => {
+  const md = renderMarkdown(rep);
+  assert.ok(md.includes('Where these numbers come from'), md);
+  assert.ok(md.includes('/repos/demo/repo/actions/runs'), md);
+  assert.ok(md.includes('triggering_actor'), md);
+  assert.ok(md.includes('2026-01-01'), md);          // rates version
+  assert.ok(md.includes('Deterministic'), md);
+  assert.ok(md.includes('evidence[]'), md);
+});
+
+test('evidence: per-job rows recompute the headline totals exactly', () => {
+  assert.equal(rep.evidence.length, rep.jobsCounted);
+  const sumCost = +rep.evidence.reduce((s, e) => s + e.cost_usd, 0).toFixed(9);
+  approx(sumCost, rep.totalCost);
+  const sumMin = rep.evidence.reduce((s, e) => s + e.minutes, 0);
+  assert.equal(sumMin, rep.totalMinutes);
+  const j7 = rep.evidence.find(e => e.job_id === 'j7');
+  assert.equal(j7.class, 'bot');
+  approx(j7.rate_usd_per_min, 0.062);
+  assert.equal(j7.minutes, 20);
+  approx(j7.cost_usd, 1.24);
+  const j9 = rep.evidence.find(e => e.job_id === 'j9');
+  assert.equal(j9.sku, 'self_hosted');
+  approx(j9.cost_usd, 0);
+  const j10 = rep.evidence.find(e => e.job_id === 'j10');
+  assert.equal(j10.class, 'agent'); // claude[bot], not generic bot
+});
+
+test('csv: header + one row per counted job, spreadsheet-safe', () => {
+  const csv = renderCsv(rep);
+  const lines = csv.trimEnd().split('\n');
+  assert.equal(lines.length, rep.jobsCounted + 1);
+  assert.ok(lines[0].startsWith('run_id,run_number,workflow,event,actor_login,actor_type,class'));
+  assert.ok(lines[0].includes('rate_usd_per_min,cost_usd,runner_labels'));
+  const j4 = lines.find(l => l.includes('j4'));
+  assert.ok(j4.includes('ubuntu-latest|arm64'), j4);
+});
+
+test('outputs for the CI budget gate', () => {
+  const o = outputsFor(rep);
+  assert.equal(o['agent-cost'], '0.1180');
+  assert.equal(o['agent-share-pct'], '6.8');
+  assert.equal(o['bot-runs-pct'], '25.0');
+  assert.equal(o['total-cost'], '1.7260');
+  assert.equal(o['total-minutes'], '71');
+});
+
+test('CLI end-to-end on fixture: files on disk + gh-output', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'costgrep-'));
+  try {
+    const ghOut = join(tmp, 'out.txt');
+    const out = execFileSync(process.execPath,
+      [CLI, '--fixture-dir', FIXTURE, '--days', '4000', '--quiet',
+       '--md-file', join(tmp, 'r.md'), '--csv-file', join(tmp, 'e.csv'), '--gh-output', ghOut],
+      { encoding: 'utf8' });
+    assert.ok(out.includes('costgrep — (fixture)'), out);
+    assert.ok(out.includes('Agents cost $0.12'), out);
+    const md = readFileSync(join(tmp, 'r.md'), 'utf8');
+    assert.ok(md.includes('Where these numbers come from'), md);
+    assert.ok(md.includes('$0.12 from AI agents'), md);
+    const csv = readFileSync(join(tmp, 'e.csv'), 'utf8');
+    assert.equal(csv.trimEnd().split('\n').length, rep.jobsCounted + 1);
+    const gh = readFileSync(ghOut, 'utf8');
+    assert.ok(gh.includes('agent-share-pct=6.8'), gh);
+    assert.ok(gh.includes('total-cost=1.7260'), gh);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 });
