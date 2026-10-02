@@ -1,5 +1,9 @@
 # costgrep
 
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![test](https://github.com/Paraphern/costgrep/actions/workflows/test.yml/badge.svg)](https://github.com/Paraphern/costgrep/actions/workflows/test.yml)
+[![self-audit](https://github.com/Paraphern/costgrep/actions/workflows/audit.yml/badge.svg)](https://github.com/Paraphern/costgrep/actions/workflows/audit.yml)
+
 **GitHub Actions cost breakdown by who triggered the run: human vs AI agent vs bot.**
 
 Copilot coding agents, Copilot code review, Claude Code, Codex, Cursor — since June 2026
