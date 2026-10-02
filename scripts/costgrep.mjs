@@ -95,12 +95,16 @@ function parseCli() {
   if (values.help) {
     console.log(`usage: costgrep.mjs [--repo owner/name] [--days 30] [--token TOKEN]
                  [--max-runs N] [--config FILE] [--fixture-dir DIR]
-                 [--json-file FILE] [--step-summary] [--quiet]`);
+                 [--json-file FILE] [--md-file FILE] [--csv-file FILE]
+                 [--gh-output FILE] [--step-summary] [--quiet]`);
     process.exit(0);
   }
   values.days = Math.max(1, parseInt(values.days, 10) || 30);
   values['max-runs'] = parseInt(values['max-runs'], 10) || 1000;
   values.repo = values.repo || (values['fixture-dir'] ? null : process.env.GITHUB_REPOSITORY);
+  if (values.repo && !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(values.repo)) {
+    throw new Error(`invalid --repo "${values.repo}" — expected owner/name (letters, digits, . _ -)`);
+  }
   return values;
 }
 
@@ -270,6 +274,7 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
   const totals = Object.fromEntries(CLASS_ORDER.map(k => [k, { runs: 0, jobs: 0, minutes: 0, cost: 0 }]));
   const selfHosted = { jobs: 0, minutes: 0 }; // $0 while the platform fee is postponed
   let inProgressRuns = 0, rateFallbackJobs = 0, countedJobs = 0, totalMinutes = 0, totalCost = 0;
+  let skippedJobs = 0, skippedCost = 0, zeroDurationJobs = 0, zeroDurationCost = 0;
   const byWorkflow = new Map(); // workflow name -> {class -> {cost, minutes}} (agent view)
   const byActor = new Map();
   const evidence = []; // one row per billable job — the audit trail behind every aggregate
@@ -290,6 +295,12 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
       if (sku === 'self_hosted') { selfHosted.jobs++; selfHosted.minutes += mins; }
       const cost = mins * rate;
       runMinutes += mins; runCost += cost; countedJobs++; anyJobCounted = true;
+      // Jobs with runner timestamps but conclusion=skipped or zero/negative duration
+      // are billed at the 1-min minimum. Whether GitHub bills them identically is
+      // unverifiable without invoice access — so we flag them with exact totals
+      // instead of silently deciding either way.
+      if (job.conclusion === 'skipped') { skippedJobs++; skippedCost += cost; }
+      if (new Date(job.completed_at) <= new Date(job.started_at)) { zeroDurationJobs++; zeroDurationCost += cost; }
       evidence.push({
         run_id: run.id, run_number: run.run_number ?? '', workflow: run.name || '(unnamed)',
         event: run.event || '', actor_login: login, actor_type: srcType, class: klass,
@@ -345,6 +356,7 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
     selfHosted,
     inProgressRuns,
     rateFallbackJobs,
+    skippedJobs, skippedCost, zeroDurationJobs, zeroDurationCost,
     evidence,
     provenance: {
       repoVisibility: repoVis,
@@ -359,9 +371,11 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
       dataSources: [
         `GET /repos/${repo}/actions/runs (workflow-run metadata)`,
         'GET /repos/{repo}/actions/runs/{id}/jobs (job metadata, latest attempt per job)',
+        'GET /repos/{repo} (repository visibility: public/private)',
       ],
       neverAccessed: 'repository code, logs, secrets — workflow metadata only',
       attribution: 'run.triggering_actor (fallback run.actor) -> agent | human | bot | unattributed',
+      skippedPolicy: 'jobs holding runner timestamps (incl. conclusion=skipped / zero duration) are billed at the 1-min minimum and reported separately — subtract them if your invoice proves GitHub does not bill such executions',
       rates: 'GitHub-hosted list prices effective 2026-01-01 — docs.github.com/en/billing/reference/actions-runner-pricing',
       ratesVersion: '2026-01-01',
       selfHostedPolicy: '$0/min while the $0.002 platform fee is postponed; minutes still counted',
@@ -402,6 +416,8 @@ function renderTable(rep) {
     for (const w of rep.topWorkflowsByCost) L.push(`    ${money(w.cost).padStart(10)}  ${w.pctOfTotal.toFixed(1).padStart(5)}%  ${w.workflow}`);
   }
   if (rep.rateFallbackJobs > 0) L.push(`>>> honesty note: ${rep.rateFallbackJobs} jobs had unrecognized runner labels — priced at the standard Linux rate.`);
+  const q = rep.skippedJobs + rep.zeroDurationJobs;
+  if (q > 0) L.push(`>>> honesty note: ${rep.skippedJobs} skipped and ${rep.zeroDurationJobs} zero-duration jobs billed at the 1-min minimum ($${(rep.skippedCost + rep.zeroDurationCost).toFixed(3)} included; subtract if your invoice proves GitHub doesn't bill them).`);
   const vn = visibilityNotice(rep);
   if (vn) L.push(vn);
   L.push('>>> List-price model: NOT your invoice. Included plan minutes are consumed first; hosted phase reconciles against the billing API.');
@@ -437,7 +453,7 @@ ${wf}
 - **Window:** last ${rep.window.days} days (${rep.window.from ?? '—'} → ${rep.window.to ?? '—'}), ${rep.runsAnalyzed} runs, ${rep.jobsCounted} of ${p.jobsFetched} fetched jobs counted (${p.inProgressExcluded} in-progress excluded).
 - **Attribution:** ${p.attribution}.
 - **Rates:** ${p.rates}. Self-hosted: ${p.selfHostedPolicy}.
-- **Honesty flags:** ${rep.rateFallbackJobs} jobs on the rate fallback (unknown runner labels → standard Linux rate); unattributed: ${rep.totals.unattributed.runs} runs.
+- **Honesty flags:** ${rep.rateFallbackJobs} jobs on the rate fallback (unknown runner labels → standard Linux rate); skipped/zero-duration jobs billed at the 1-min minimum: ${rep.skippedJobs + rep.zeroDurationJobs} ($${(rep.skippedCost + rep.zeroDurationCost).toFixed(3)} included — subtract if your invoice differs); unattributed: ${rep.totals.unattributed.runs} runs.
 
 _List-price model — NOT the invoice: included plan minutes are consumed first. Deterministic: ${p.deterministic}. Verify any number against the per-job \`evidence[]\` in the JSON / CSV export. Full methodology: README._
 `;

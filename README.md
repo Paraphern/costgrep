@@ -19,15 +19,34 @@ they all burn your Actions minutes *on top of* AI credits ([#192948], 958 downvo
 GitHub's own usage views don't tell you **who** spent it. This does:
 
 ```
-$ node scripts/costgrep.mjs --repo actions/stale --days 60
+$ node scripts/costgrep.mjs --repo actions/stale --days 30 --max-runs 50 --quiet
+costgrep — actions/stale (last 30 days, 50 runs, 45 jobs)
+========================================================================
 class      runs   run%    minutes       cost    cost%
+------------------------------------------------------------------------
 agent         0   0.0%         0      $0.00    0.0%
-human         2  25.0%         6      $0.16   54.5%
-bot           6  75.0%        11      $0.13   45.5%
+human        39  78.0%        47      $0.59   78.8%
+bot          11  22.0%        16      $0.16   21.2%
+unattributed     0   0.0%         0      $0.00    0.0%
+------------------------------------------------------------------------
+total        50               63      $0.75
+
 >>> Agents cost $0.00 (0.0% of CI spend, 0 runs / 0.0%).
->>> Bot runs: 6 (75.0% of all runs), bot spend $0.13.
->>> Top workflows by total cost: ...
+>>> Bot runs: 11 (22.0% of all runs), bot spend $0.16.
+>>> Top workflows by total cost:
+         $0.50   66.6%  Basic validation
+         $0.08   11.1%  Code scanning
+         $0.06    8.0%  Licensed
+>>> public repo: standard Linux/Windows minutes are FREE — the $ above is the
+    list-price VALUE of this compute (what it would cost in a private repo), not
+    money owed. NOTE: 5 macOS/larger-runner jobs ARE billed even for public
+    repos (~$0.37).
+>>> List-price model: NOT your invoice. Included plan minutes are consumed
+    first; hosted phase reconciles against the billing API.
 ```
+
+*(Real snapshot taken 2026-10-02 with the exact command shown; rerun it and you get
+current numbers — and this README's own honesty notes print with every report.)*
 
 Runs **on your infrastructure** (your Actions runner, your terminal). Zero npm
 dependencies, one file, no telemetry, no code/log access — workflow-run metadata only.
@@ -63,10 +82,15 @@ No org-admin rights, no billing access, no webhook — the repo-scoped
 ```bash
 node scripts/costgrep.mjs --repo owner/name [--days 30] [--token $GITHUB_TOKEN] \
   [--max-runs 1000] [--config my-rules.json] [--json-file report.json] \
-  [--csv-file evidence.csv] [--md-file report.md] [--step-summary]
+  [--csv-file evidence.csv] [--md-file report.md] [--gh-output $GITHUB_OUTPUT] \
+  [--step-summary] [--quiet] [--help]
 # offline demo on a bundled fixture:
 node scripts/costgrep.mjs --fixture-dir test/fixtures/demo-repo --days 4000
 ```
+
+Requires Node >= 18 (`fetch`, `node:test`, ESM — no dependencies). Note on caps:
+`--max-runs` defaults to **1000** in the CLI and **500** in the composite action
+(safety cap for shared runners).
 
 `--config` (JSON) extends the classifier and overrides rates:
 
@@ -120,6 +144,11 @@ Verify it yourself (that's the point):
 5. spot-check any `run_id` via `gh api /repos/{repo}/actions/runs/{run_id}/jobs` — timestamps,
    actor and labels in the CSV are the API's own values, unmodified.
 
+Scope note: the CSV proves the **spend and minutes** figures. The *run-share* percentages
+(e.g. "agents = 53.5% of runs") count all runs in the window, including ones whose jobs
+never started — those are visible in the JSON report's `runsAnalyzed`/class totals, and
+re-derivable directly from `GET /repos/{repo}/actions/runs`.
+
 ## How it attributes (public methodology — zero invented precision)
 
 1. **Identity = `triggering_actor`**, falling back to `actor`. Re-runs are
@@ -137,8 +166,13 @@ Verify it yourself (that's the point):
      quietly re-assign it.
 3. **Minutes:** `ceil((completed_at − started_at) / 60s)` per job, minimum 1 —
    same per-job round-up GitHub bills by. Jobs of the latest attempt only
-   (the API default), so re-run attempts aren't double-counted. Queued/skipped
-   jobs count 0; in-progress runs are excluded and reported.
+   (the API default), so re-run attempts aren't double-counted. Jobs that never
+   reached a runner (no timestamps) count 0; in-progress runs are excluded and
+   reported. Jobs that hold runner timestamps but were `skipped` or had
+   zero/negative duration are billed at the 1-minute minimum and **flagged in
+   every report with their exact total** — whether GitHub bills such executions
+   identically is unverifiable without invoice access, so we surface the
+   subtrahend instead of silently deciding.
 4. **Rates:** the published GitHub-hosted runner list prices effective
    2026-01-01 ([docs]), keyed by the same SKU ids the billing API uses — the
    foundation for invoice reconciliation in the hosted phase. Self-hosted = $0

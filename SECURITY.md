@@ -18,11 +18,15 @@ costgrep runs **on your infrastructure** (your Actions runner or your terminal)
 and makes outbound calls **only** to `api.github.com`:
 
 - `GET /repos/{repo}/actions/runs` and `GET /repos/{repo}/actions/runs/{id}/jobs`
-  — workflow-run and job **metadata** (actors, timestamps, labels, conclusions).
+  — workflow-run and job **metadata** (actors, timestamps, labels, conclusions);
+- `GET /repos/{repo}` — repository visibility (public/private), nothing else.
 
-It never reads: repository code, job logs, step output, secrets, environment
-variables other than `GITHUB_TOKEN`/`GITHUB_REPOSITORY`, or any billing endpoint
-(those need org-admin rights this tool does not ask for).
+Environment variables it reads: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`,
+`GITHUB_STEP_SUMMARY` (append the Markdown report), and `COSTGREP_NO_WAIT`
+(skip the rate-limit retry sleep). No others.
+
+It never reads: repository code, job logs, step output, secrets, or any billing
+endpoint (those need org-admin rights this tool does not ask for).
 
 The GitHub token you pass is used solely in the `Authorization` header of those
 GET requests. It is never logged, stored, or transmitted anywhere else. The

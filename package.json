@@ -1,9 +1,12 @@
 {
   "name": "costgrep",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "GitHub Actions cost breakdown: human vs AI agent vs bot. Zero-dependency CLI + composite action.",
   "type": "module",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/Paraphern/costgrep#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/Paraphern/costgrep.git" },
+  "bugs": "https://github.com/Paraphern/costgrep/issues",
   "bin": { "costgrep": "scripts/costgrep.mjs" },
   "scripts": {
     "test": "node --test"

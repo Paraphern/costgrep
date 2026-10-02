@@ -11,7 +11,7 @@ sit next to this file; full JSON regenerates with the command at the bottom.*
 |---|---|---|---|---|---|---|
 | [github/gh-aw](https://github.com/github/gh-aw) | 02.10 (1 day) | 200 | 901 | $3.97 | **28.8%** (107 runs, 53.5%) | 5% (6%) |
 | [vercel/next.js](https://github.com/vercel/next.js) | 02.10 (1 day) | 200 | 11,183 | $299.93 | 0.0% (2 runs, 1%) | 3% (20%) |
-| [facebook/react](https://github.com/facebook/react) | 30.09–02.10 | 200 | 2,238 | $13.43 | 0% (0) | 22% (48%) |
+| [react](https://github.com/react/react) (facebook/react) | 30.09–02.10 | 200 | 2,238 | $13.43 | 0% (0) | 22% (48%) |
 | [github/docs](https://github.com/github/docs) | 02.10 (1 day) | 200 | 470 | $2.82 | 0% (0) | 1% (0%) |
 | [actions/stale](https://github.com/actions/stale) | 03–29.09 (30d) | 87 | 133 | $1.50 | 2.0% (1 run) | 36% (37%) |
 | [Paraphern/rugsnare](https://github.com/Paraphern/rugsnare) | 29.09–02.10 | 132 | 711 | $5.11 | 0% (0) | 2% (1%) |
@@ -46,6 +46,9 @@ sit next to this file; full JSON regenerates with the command at the bottom.*
   full 30 days (window listed per repo).
 - **Rate-fallback bucket:** jobs whose API `labels` array is empty were priced at the
   standard Linux rate and flagged in each report (next.js: 50 of 1,840 jobs = 2.7%;
-  react: 27 of 1,254 = 2.1%; others: 0). Known limitation, stated in every report.
+  react: 27 of 1,254 = 2.1%; gh-aw: 2; others: 0). Known limitation, stated in every report.
+- **Logins:** the CSVs contain GitHub logins of users who triggered public workflow runs —
+  public API metadata, quoted unmodified so every row stays verifiable. No private data
+  was accessed or inferred.
 - Attribution by `triggering_actor` + slug lists; humans remain humans, unknown accounts
   would land in `unattributed` (0 across this sample).
