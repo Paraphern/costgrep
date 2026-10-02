@@ -6,6 +6,12 @@
 
 **GitHub Actions cost breakdown by who triggered the run: human vs AI agent vs bot.**
 
+**See it on real data → [live benchmark, 6 public repos](benchmark/2026-10-02/README.md):**
+in GitHub's own agentic-workflows repo, AI agents triggered **53.5% of runs and 28.8% of
+CI spend in a single day**; in facebook/react, bots account for **48% of spend**; in
+vercel/next.js, one day of CI is ~11,000 minutes (~$300 of list-price compute).
+Every figure ships with per-job evidence you can recompute in a spreadsheet.
+
 Copilot coding agents, Copilot code review, Claude Code, Codex, Cursor — since June 2026
 they all burn your Actions minutes *on top of* AI credits ([#192948], 958 downvotes).
 GitHub's own usage views don't tell you **who** spent it. This does:
