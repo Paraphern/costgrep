@@ -97,7 +97,7 @@ function parseCli() {
   }
   values.days = Math.max(1, parseInt(values.days, 10) || 30);
   values['max-runs'] = parseInt(values['max-runs'], 10) || 1000;
-  values.repo = values.repo || process.env.GITHUB_REPOSITORY;
+  values.repo = values.repo || (values['fixture-dir'] ? null : process.env.GITHUB_REPOSITORY);
   return values;
 }
 
