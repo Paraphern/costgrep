@@ -195,7 +195,7 @@ Scope note: the CSV proves the **spend and minutes** figures. The *run-share* pe
 never started — those are visible in the JSON report's `runsAnalyzed`/class totals, and
 re-derivable directly from `GET /repos/{repo}/actions/runs`.
 
-## How it attributes (public methodology — zero invented precision)
+## How it attributes (summary — full methodology: [docs/methodology.md](docs/methodology.md))
 
 1. **Identity = `triggering_actor`**, falling back to `actor`. Re-runs are
    attributed to whoever re-ran them. For `workflow_run` chains `github.actor`
@@ -267,6 +267,13 @@ Run it on a repo where you can see the Actions usage chart for the same window:
 **This repo — the CLI and the composite action — is free and open source, permanently.**
 If a paid product ever appears, it will be the *hosted service* (continuous monitoring,
 invoice reconciliation), not this code.
+
+**1.0 is criteria-based, not date-based** (see [CHANGELOG](CHANGELOG.md) and
+[docs/calibration.md](docs/calibration.md)): accuracy demonstrated on ≥5 real
+organizations with reconciliation delta ≤5%; 100+ action installs; zero open
+doctrine violations under a repeatable verification pass. Current state:
+**engineering-complete to 1.0-rc — the remaining gates are market evidence.**
+Stability guarantees: [docs/compatibility.md](docs/compatibility.md).
 
 - **Phase B (hosted):** GitHub App + webhooks → org-wide dashboard, per-actor
   budgets/alerts, weekly digests.
