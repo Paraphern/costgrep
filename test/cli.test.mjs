@@ -101,7 +101,7 @@ test('fixture: global totals, self-hosted bucket, honesty flags', () => {
   assert.equal(rep.selfHosted.jobs, 1);
   assert.equal(rep.selfHosted.minutes, 3);
   assert.equal(rep.rateFallbackJobs, 1);
-  assert.equal(rep.inProgressRuns, 1);
+  assert.equal(rep.inProgressJobs, 1);
 });
 
 test('fixture: top workflows by cost', () => {
@@ -154,9 +154,12 @@ test('csv: header + one row per counted job, spreadsheet-safe', () => {
   const lines = csv.trimEnd().split('\n');
   assert.equal(lines.length, rep.jobsCounted + 1);
   assert.ok(lines[0].startsWith('run_id,run_number,workflow,event,actor_login,actor_type,class'));
-  assert.ok(lines[0].includes('rate_usd_per_min,cost_usd,runner_labels'));
+  assert.ok(lines[0].endsWith('runner_labels,rate_fallback,conclusion'), lines[0]);
   const j4 = lines.find(l => l.includes('j4'));
   assert.ok(j4.includes('ubuntu-latest|arm64'), j4);
+  assert.ok(j4.includes(',false,success') || j4.endsWith(',false,success'), j4); // rate_fallback + conclusion columns
+  const j10 = lines.find(l => l.includes('j10')); // weird-runner-label -> fallback rate
+  assert.ok(j10.includes(',true,'), j10);
 });
 
 test('outputs for the CI budget gate', () => {

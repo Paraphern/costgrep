@@ -1,6 +1,6 @@
 {
   "name": "costgrep",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "GitHub Actions cost breakdown: human vs AI agent vs bot. Zero-dependency CLI + composite action.",
   "type": "module",
   "license": "Apache-2.0",

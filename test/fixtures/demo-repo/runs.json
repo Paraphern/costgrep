@@ -11,6 +11,7 @@
         "id": "j1",
         "name": "build",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-28T10:00:10Z",
         "completed_at": "2026-09-28T10:05:40Z",
         "labels": ["ubuntu-latest"]
@@ -19,6 +20,7 @@
         "id": "j2",
         "name": "test-windows",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-28T10:00:10Z",
         "completed_at": "2026-09-28T10:10:10Z",
         "labels": ["windows-latest"]
@@ -37,6 +39,7 @@
         "id": "j3",
         "name": "build",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-27T09:00:00Z",
         "completed_at": "2026-09-27T09:07:01Z",
         "labels": ["ubuntu-latest"]
@@ -45,6 +48,7 @@
         "id": "j4",
         "name": "lint",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-27T09:00:00Z",
         "completed_at": "2026-09-27T09:01:01Z",
         "labels": ["ubuntu-latest", "arm64"]
@@ -63,6 +67,7 @@
         "id": "j5",
         "name": "review",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-26T12:00:00Z",
         "completed_at": "2026-09-26T12:04:00Z",
         "labels": ["ubuntu-latest"]
@@ -81,6 +86,7 @@
         "id": "j6",
         "name": "build",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-25T08:00:00Z",
         "completed_at": "2026-09-25T08:02:00Z",
         "labels": ["ubuntu-latest"]
@@ -99,6 +105,7 @@
         "id": "j7",
         "name": "e2e-macos",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-24T03:00:00Z",
         "completed_at": "2026-09-24T03:20:00Z",
         "labels": ["macos-latest"]
@@ -107,6 +114,7 @@
         "id": "j8",
         "name": "e2e-big",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-24T03:00:00Z",
         "completed_at": "2026-09-24T03:10:00Z",
         "labels": ["linux-8-core", "x64"]
@@ -125,6 +133,7 @@
         "id": "j9",
         "name": "build",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-23T05:00:00Z",
         "completed_at": "2026-09-23T05:03:00Z",
         "labels": ["self-hosted", "linux", "x64"]
@@ -143,6 +152,7 @@
         "id": "j10",
         "name": "build",
         "status": "completed",
+        "conclusion": "success",
         "started_at": "2026-09-22T11:00:00Z",
         "completed_at": "2026-09-22T11:06:00Z",
         "labels": ["weird-runner-label"]

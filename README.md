@@ -37,12 +37,8 @@ total        50               63      $0.75
          $0.50   66.6%  Basic validation
          $0.08   11.1%  Code scanning
          $0.06    8.0%  Licensed
->>> public repo: standard Linux/Windows minutes are FREE — the $ above is the
-    list-price VALUE of this compute (what it would cost in a private repo), not
-    money owed. NOTE: 5 macOS/larger-runner jobs ARE billed even for public
-    repos (~$0.37).
->>> List-price model: NOT your invoice. Included plan minutes are consumed
-    first; hosted phase reconciles against the billing API.
+>>> public repo: standard Linux/Windows minutes are FREE — the $ above is the list-price VALUE of this compute (what it would cost in a private repo), not money owed. NOTE: 5 macOS/larger-runner jobs ARE billed even for public repos (~$0.37).
+>>> List-price model: NOT your invoice. Included plan minutes are consumed first; hosted phase reconciles against the billing API.
 ```
 
 *(Real snapshot taken 2026-10-02 with the exact command shown; rerun it and you get

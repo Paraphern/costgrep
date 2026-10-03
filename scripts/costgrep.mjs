@@ -273,7 +273,7 @@ function visibilityNotice(rep) {
 function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
   const totals = Object.fromEntries(CLASS_ORDER.map(k => [k, { runs: 0, jobs: 0, minutes: 0, cost: 0 }]));
   const selfHosted = { jobs: 0, minutes: 0 }; // $0 while the platform fee is postponed
-  let inProgressRuns = 0, rateFallbackJobs = 0, countedJobs = 0, totalMinutes = 0, totalCost = 0;
+  let inProgressJobs = 0, rateFallbackJobs = 0, countedJobs = 0, totalMinutes = 0, totalCost = 0;
   let skippedJobs = 0, skippedCost = 0, zeroDurationJobs = 0, zeroDurationCost = 0;
   const byWorkflow = new Map(); // workflow name -> {class -> {cost, minutes}} (agent view)
   const byActor = new Map();
@@ -289,7 +289,7 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
     for (const job of jobs) {
       const mins = jobMinutes(job);
       if (!job.started_at) continue;
-      if (!job.completed_at) { inProgressRuns++; continue; }
+      if (!job.completed_at) { inProgressJobs++; continue; }
       const { sku, rate, fallback } = inferRate(job, cfg);
       if (fallback) rateFallbackJobs++;
       if (sku === 'self_hosted') { selfHosted.jobs++; selfHosted.minutes += mins; }
@@ -307,6 +307,7 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
         job_id: job.id, job_name: job.name || '', started_at: job.started_at, completed_at: job.completed_at,
         minutes: mins, sku, rate_usd_per_min: rate, cost_usd: cost,
         runner_labels: (job.labels || []).join('|'),
+        rate_fallback: fallback, conclusion: job.conclusion ?? '',
       });
       totalMinutes += mins; totalCost += cost;
       const wf = run.name || '(unnamed workflow)';
@@ -354,7 +355,7 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
     totalMinutes,
     totalCost,
     selfHosted,
-    inProgressRuns,
+    inProgressJobs,
     rateFallbackJobs,
     skippedJobs, skippedCost, zeroDurationJobs, zeroDurationCost,
     evidence,
@@ -380,7 +381,7 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
       ratesVersion: '2026-01-01',
       selfHostedPolicy: '$0/min while the $0.002 platform fee is postponed; minutes still counted',
       jobsFetched,
-      inProgressExcluded: inProgressRuns,
+      inProgressExcluded: inProgressJobs,
       deterministic: 'same repo + window -> same numbers',
     },
   };
@@ -450,7 +451,7 @@ ${wf}
 
 - **Repo visibility:** ${p.repoVisibility}${p.repoVisibility === 'public' ? ` — standard Linux/Windows hosted minutes are **free** for public repositories; the $ figures are the list-price value of this compute, not money owed${p.billedEvenIfPublic.jobs > 0 ? `. Exception: ${p.billedEvenIfPublic.jobs} macOS/larger-runner jobs are billed even for public repos (~$${p.billedEvenIfPublic.cost.toFixed(2)}).` : '.'}` : p.repoVisibility === 'private' ? ' — list-price model; included plan minutes are consumed before these amounts reach the invoice.' : ' (could not determine).'}
 - **Data:** ${p.dataSources[0]}; ${p.dataSources[1]}. ${p.neverAccessed}.
-- **Window:** last ${rep.window.days} days (${rep.window.from ?? '—'} → ${rep.window.to ?? '—'}), ${rep.runsAnalyzed} runs, ${rep.jobsCounted} of ${p.jobsFetched} fetched jobs counted (${p.inProgressExcluded} in-progress excluded).
+- **Window:** last ${rep.window.days} days (${rep.window.from ?? '—'} → ${rep.window.to ?? '—'}), ${rep.runsAnalyzed} runs, ${rep.jobsCounted} of ${p.jobsFetched} fetched jobs counted (${p.inProgressExcluded} in-progress jobs excluded).
 - **Attribution:** ${p.attribution}.
 - **Rates:** ${p.rates}. Self-hosted: ${p.selfHostedPolicy}.
 - **Honesty flags:** ${rep.rateFallbackJobs} jobs on the rate fallback (unknown runner labels → standard Linux rate); skipped/zero-duration jobs billed at the 1-min minimum: ${rep.skippedJobs + rep.zeroDurationJobs} ($${(rep.skippedCost + rep.zeroDurationCost).toFixed(3)} included — subtract if your invoice differs); unattributed: ${rep.totals.unattributed.runs} runs.
@@ -468,7 +469,8 @@ function csvEscape(v) {
 // the sums must equal the headline totals.
 function renderCsv(rep) {
   const cols = ['run_id', 'run_number', 'workflow', 'event', 'actor_login', 'actor_type', 'class',
-    'job_id', 'job_name', 'started_at', 'completed_at', 'minutes', 'sku', 'rate_usd_per_min', 'cost_usd', 'runner_labels'];
+    'job_id', 'job_name', 'started_at', 'completed_at', 'minutes', 'sku', 'rate_usd_per_min', 'cost_usd',
+    'runner_labels', 'rate_fallback', 'conclusion'];
   const lines = [cols.join(',')];
   for (const e of rep.evidence) lines.push(cols.map(c => csvEscape(e[c])).join(','));
   return lines.join('\n') + '\n';
