@@ -11,13 +11,13 @@ const CLI = join(ROOT, 'scripts', 'costgrep.mjs');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'demo-repo');
 
 const mod = await import(`file://${CLI.replace(/\\/g, '/')}`);
-const { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, norm, DEFAULT_RATES } = mod;
+const { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, norm, DEFAULT_RATES, DEFAULT_COAUTHORS } = mod;
 
 const run = (overrides = {}) => {
   const actor = overrides.actor ?? { login: 'x', type: 'User' };
   return { actor, triggering_actor: overrides.triggering_actor ?? actor, ...overrides };
 };
-const cfg = { agents: mod.DEFAULT_AGENTS, bots: mod.DEFAULT_BOTS, rates: DEFAULT_RATES };
+const cfg = { agents: mod.DEFAULT_AGENTS, bots: mod.DEFAULT_BOTS, rates: DEFAULT_RATES, coab: true, coauthorNames: DEFAULT_COAUTHORS };
 const approx = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
 
 // --- attribution -----------------------------------------------------------
@@ -30,6 +30,54 @@ test('classifies AI agents before the generic Bot rule', () => {
   assert.equal(classifyActor(run({ actor: { login: 'Copilot', type: 'Bot' } }), cfg).klass, 'agent');
   assert.equal(classifyActor(run({ actor: { login: 'claude[bot]', type: 'Bot' } }), cfg).klass, 'agent');
   assert.equal(classifyActor(run({ actor: { login: 'cursor[bot]', type: 'Bot' } }), cfg).klass, 'agent');
+});
+
+test('agent-assisted: human-triggered run with an AI Co-Authored-By trailer in head_commit', () => {
+  const withMsg = (msg) => run({
+    actor: { login: 'anna-dev', type: 'User' },
+    head_commit: msg ? { message: msg } : undefined,
+  });
+  assert.equal(classifyActor(withMsg('fix: thing\n\nCo-Authored-By: Copilot <17572847+Copilot@users.noreply.github.com>'), cfg).klass, 'agent-assisted');
+  assert.equal(classifyActor(withMsg('fix: thing\n\nCo-Authored-By: Claude <noreply@anthropic.com>'), cfg).klass, 'agent-assisted');
+  assert.equal(classifyActor(withMsg('fix: thing\n\nCo-Authored-By: Jane Doe <jane@x.io>'), cfg).klass, 'human');
+  assert.equal(classifyActor(withMsg('no trailers here'), cfg).klass, 'human');
+  assert.equal(classifyActor(withMsg('Co-Authored-By: Copilot <x>'), { ...cfg, coab: false }).klass, 'human'); // --no-coab
+  // bots stay bots even with a trailer; agents stay agents
+  assert.equal(classifyActor(run({ actor: { login: 'github-actions[bot]', type: 'Bot' }, head_commit: { message: 'Co-Authored-By: Copilot <x>' } }), cfg).klass, 'bot');
+});
+
+test('bundled agents.json parses and feeds the classifier', () => {
+  const data = JSON.parse(readFileSync(join(ROOT, 'agents.json'), 'utf8'));
+  assert.ok(Array.isArray(data.agents) && data.agents.length >= 20);
+  assert.ok(Array.isArray(data.bots) && data.bots.length >= 15);
+  assert.ok(Array.isArray(data.coauthorNames) && data.coauthorNames.length >= 10);
+  assert.ok(coAuthoredByAgent(`x\nCo-Authored-By: ${data.coauthorNames[0]} <noreply>`, cfg));
+});
+
+test('org mode: aggregates per-repo reports honestly', () => {
+  const mk = (repo, agentCost, humanCost, runs) => {
+    const r = buildReport(repo, [], new Map(), cfg, 30);
+    r.totals.agent.cost = agentCost; r.totals.human.cost = humanCost;
+    r.totals.agent.runs = runs; r.totals.human.runs = 1;
+    r.totalCost = agentCost + humanCost; r.totalMinutes = 10;
+    r.runsAnalyzed = runs + 1; r.jobsCounted = 2;
+    r.window = { days: 30, from: '2026-10-01T00:00:00Z', to: '2026-10-02T00:00:00Z' };
+    r.topActors = [{ login: 'a', klass: 'agent', runs, minutes: 1, cost: agentCost }];
+    return r;
+  };
+  const org = buildOrgReport('acme', [mk('acme/one', 1, 1, 2), mk('acme/two', 3, 0, 5)]);
+  assert.equal(org.repo, 'org: acme');
+  assert.equal(org.reposAnalyzed, 2);
+  approx(org.totals.agent.cost, 4);
+  approx(org.totalCost, 5);
+  assert.equal(org.totals.agent.runs, 7);
+  approx(org.totals.agent.pctCost, 80);
+  assert.equal(org.topReposByCost[0].repo, 'acme/two'); // sorted by cost
+  const t = renderTable(org);
+  assert.ok(t.includes('org: acme'), t);
+  assert.ok(t.includes('Top repos by total cost'), t);
+  const o = outputsFor(org);
+  assert.equal(o['agent-assisted-cost'], '0.0000');
 });
 
 test('classifies humans and automation bots', () => {

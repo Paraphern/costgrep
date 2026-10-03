@@ -79,7 +79,9 @@ No org-admin rights, no billing access, no webhook — the repo-scoped
 node scripts/costgrep.mjs --repo owner/name [--days 30] [--token $GITHUB_TOKEN] \
   [--max-runs 1000] [--config my-rules.json] [--json-file report.json] \
   [--csv-file evidence.csv] [--md-file report.md] [--gh-output $GITHUB_OUTPUT] \
-  [--step-summary] [--quiet] [--help]
+  [--no-coab] [--pr-comment N|auto] [--step-summary] [--quiet] [--help]
+# org-wide audit (still no org-admin rights — a PAT with actions:read is enough):
+node scripts/costgrep.mjs --org my-org [--repos 20] [--max-runs 100]
 # offline demo on a bundled fixture:
 node scripts/costgrep.mjs --fixture-dir test/fixtures/demo-repo --days 4000
 ```
@@ -154,7 +156,12 @@ re-derivable directly from `GET /repos/{repo}/actions/runs`.
 2. **Classes:**
    - `agent` — login matches an AI-agent slug list (Copilot / `copilot-swe-agent`,
      Claude, Codex, Cursor, Gemini, Devin, Aider, Windsurf, CodeRabbit, Qodo, …
-     full list in the source; extend via `--config`);
+     the list lives in [`agents.json`](agents.json) — extend it by PR, no code);
+   - `agent-assisted` — human-triggered run whose head commit carries an AI
+     `Co-Authored-By:` trailer (checked from the run's own metadata, zero extra
+     API calls; disable with `--no-coab`). Known limit, stated plainly: some
+     editors (VS Code) auto-insert the Copilot trailer — that's why this is a
+     separate class and never silently merged into `agent`;
    - `bot` — automation (`github-actions[bot]`, Dependabot, Renovate, …) and any
      other `type: Bot` / `[bot]` account not claimed by the agent list;
    - `human` — `type: User`;

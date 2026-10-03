@@ -1,0 +1,20 @@
+{
+  "version": "2026-10-03",
+  "note": "Data file: extend the classifier without touching code. PRs adding entries must cite evidence (a public run/PR/doc) — see CONTRIBUTING.md. Rates live in code (money = code review).",
+  "agents": [
+    "copilot", "copilot-swe-agent", "claude", "cursor", "codex", "openai-codex",
+    "gemini", "gemini-code-assist", "jules", "devin", "aider", "windsurf",
+    "codebuff", "opencode", "goose", "factory", "sweep", "coderabbit",
+    "qodo", "greptile", "ellipsis", "codeant", "kodu", "ampcode"
+  ],
+  "bots": [
+    "github-actions", "actions-user", "dependabot", "renovate", "greenkeeper",
+    "imgbot", "allcontributors", "lock", "stash", "bors", "mergify",
+    "semantic-release-bot", "codecov", "coveralls", "netlify", "vercel",
+    "github-advanced-security", "fossa", "changeset-bot"
+  ],
+  "coauthorNames": [
+    "copilot", "claude", "cursor", "gemini", "codex", "devin", "aider",
+    "windsurf", "jules", "goose", "codebuff", "opencode"
+  ]
+}

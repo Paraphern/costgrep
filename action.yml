@@ -17,7 +17,10 @@ inputs:
     description: 'Safety cap on analyzed workflow runs'
     default: '500'
   config:
-    description: 'Optional JSON file {agents, bots, rates} to extend/override defaults'
+    description: 'Optional JSON file {agents, bots, rates, coab} to extend/override defaults'
+    default: ''
+  pr-comment:
+    description: 'Optional: post the report as a PR comment (PR number, or "auto" to take it from GITHUB_REF; token needs pull-requests:write)'
     default: ''
   json-file:
     description: 'Where to write the full JSON report (relative to workspace)'
@@ -36,6 +39,8 @@ outputs:
     description: 'Total billable minutes (rounded per job, like GitHub)'
   agent-cost:
     description: 'List-price spend attributed to AI agents, USD'
+  agent-assisted-cost:
+    description: 'Spend from human-triggered runs whose commits carry an AI Co-Authored-By trailer, USD'
   agent-share-pct:
     description: 'Agents share of total CI spend, % (e.g. "6.8")'
   agent-runs:
@@ -61,11 +66,13 @@ runs:
         CG_CSV: ${{ inputs.csv-file }}
         CG_MD: ${{ inputs.md-file }}
         CG_CONFIG: ${{ inputs.config }}
+        CG_PR: ${{ inputs.pr-comment }}
       run: |
         ARGS=(--repo "$CG_REPO" --days "$CG_DAYS" --max-runs "$CG_MAX_RUNS" --token "$CG_TOKEN" --json-file "$CG_JSON" --gh-output "$GITHUB_OUTPUT" --step-summary)
         [ -n "$CG_CSV" ] && ARGS+=(--csv-file "$CG_CSV")
         [ -n "$CG_MD" ] && ARGS+=(--md-file "$CG_MD")
         [ -n "$CG_CONFIG" ] && ARGS+=(--config "$CG_CONFIG")
+        [ -n "$CG_PR" ] && ARGS+=("--pr-comment=$CG_PR")
         node "${{ github.action_path }}/scripts/costgrep.mjs" "${ARGS[@]}"
 
 branding:

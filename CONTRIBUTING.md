@@ -4,11 +4,12 @@ Two kinds of contributions matter here — and one explicit non-goal.
 
 ## 1. Data: the agent/bot lists and the rate matrix
 
-This tool's accuracy lives in two datasets inside `scripts/costgrep.mjs`:
+This tool's accuracy lives in two datasets:
 
-- `DEFAULT_AGENTS` — logins of AI coding agents / AI reviewers,
-- `DEFAULT_BOTS` — automation bots,
-- `DEFAULT_RATES` — per-SKU list prices.
+- [`agents.json`](agents.json) — logins of AI agents / bots and Co-Authored-By
+  names. **Data PRs go here** (no code changes needed);
+- `DEFAULT_RATES` in `scripts/costgrep.mjs` — per-SKU list prices (money =
+  code review).
 
 When proposing changes:
 

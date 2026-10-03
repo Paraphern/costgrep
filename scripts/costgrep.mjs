@@ -69,7 +69,14 @@ const DEFAULT_BOTS = [
   'github-advanced-security', 'fossa', 'changeset-bot',
 ];
 
-const CLASS_ORDER = ['agent', 'human', 'bot', 'unattributed'];
+// Co-Authored-By trailer names (normalized) treated as agent co-authorship.
+// Fallback mirror of agents.json for single-file deployments.
+const DEFAULT_COAUTHORS = [
+  'copilot', 'claude', 'cursor', 'gemini', 'codex', 'devin', 'aider',
+  'windsurf', 'jules', 'goose', 'codebuff', 'opencode',
+];
+
+const CLASS_ORDER = ['agent', 'agent-assisted', 'human', 'bot', 'unattributed'];
 
 // ---------------------------------------------------------------------------
 // CLI
@@ -78,10 +85,14 @@ function parseCli() {
   const { values } = parseArgs({
     options: {
       repo: { type: 'string' },            // owner/name; default $GITHUB_REPOSITORY
+      org: { type: 'string' },             // org-wide mode: audit all visible repos of this org/user
+      repos: { type: 'string', default: '20' }, // org mode: how many repos (sorted by last push)
       days: { type: 'string', default: '30' },
       token: { type: 'string' },           // default $GITHUB_TOKEN (optional for public repos)
-      'max-runs': { type: 'string', default: '1000' },
-      config: { type: 'string' },          // JSON file: {agents, bots, rates}
+      'max-runs': { type: 'string' },      // per repo; default 1000 (org mode: 100)
+      config: { type: 'string' },          // JSON file: {agents, bots, rates, coab}
+      'no-coab': { type: 'boolean', default: false }, // disable Co-Authored-By agent-assisted detection
+      'pr-comment': { type: 'string' },    // post the report as a PR comment: number or 'auto'
       'fixture-dir': { type: 'string' },   // offline mode: runs.json with embedded jobs
       'json-file': { type: 'string' },     // write full report JSON here (incl. evidence[] + provenance)
       'md-file': { type: 'string' },       // write shareable Markdown report with provenance block
@@ -93,28 +104,44 @@ function parseCli() {
     },
   });
   if (values.help) {
-    console.log(`usage: costgrep.mjs [--repo owner/name] [--days 30] [--token TOKEN]
-                 [--max-runs N] [--config FILE] [--fixture-dir DIR]
+    console.log(`usage: costgrep.mjs [--repo owner/name | --org NAME [--repos N]] [--days 30] [--token TOKEN]
+                 [--max-runs N] [--config FILE] [--no-coab] [--pr-comment N|auto] [--fixture-dir DIR]
                  [--json-file FILE] [--md-file FILE] [--csv-file FILE]
                  [--gh-output FILE] [--step-summary] [--quiet]`);
     process.exit(0);
   }
   values.days = Math.max(1, parseInt(values.days, 10) || 30);
-  values['max-runs'] = parseInt(values['max-runs'], 10) || 1000;
-  values.repo = values.repo || (values['fixture-dir'] ? null : process.env.GITHUB_REPOSITORY);
+  values.repos = Math.max(1, parseInt(values.repos, 10) || 20);
+  values['max-runs'] = parseInt(values['max-runs'] ?? '', 10) || (values.org ? 100 : 1000);
+  values.repo = values.repo || (values['fixture-dir'] || values.org ? null : process.env.GITHUB_REPOSITORY);
   if (values.repo && !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(values.repo)) {
     throw new Error(`invalid --repo "${values.repo}" — expected owner/name (letters, digits, . _ -)`);
+  }
+  if (values.org && !/^[A-Za-z0-9-]+$/.test(values.org)) {
+    throw new Error(`invalid --org "${values.org}" — expected an org/user login`);
   }
   return values;
 }
 
 function loadConfig(path) {
-  const cfg = { agents: [...DEFAULT_AGENTS], bots: [...DEFAULT_BOTS], rates: DEFAULT_RATES };
+  const cfg = {
+    agents: [...DEFAULT_AGENTS], bots: [...DEFAULT_BOTS], rates: DEFAULT_RATES,
+    coab: true, coauthorNames: [...DEFAULT_COAUTHORS],
+  };
+  // The bundled agents.json extends the baked-in lists — data PRs don't touch code.
+  try {
+    const bundled = JSON.parse(readFileSync(new URL('../agents.json', import.meta.url), 'utf8'));
+    if (bundled.agents) cfg.agents = [...new Set([...cfg.agents, ...bundled.agents.map(norm)])];
+    if (bundled.bots) cfg.bots = [...new Set([...cfg.bots, ...bundled.bots.map(norm)])];
+    if (bundled.coauthorNames) cfg.coauthorNames = [...new Set([...cfg.coauthorNames, ...bundled.coauthorNames.map(norm)])];
+  } catch { /* single-file deployments keep the baked-in defaults */ }
   if (!path) return cfg;
   if (!existsSync(path)) throw new Error(`config file not found: ${path}`);
   const user = JSON.parse(readFileSync(path, 'utf8'));
   if (user.agents) cfg.agents = [...new Set([...cfg.agents, ...user.agents.map(norm)])];
   if (user.bots) cfg.bots = [...new Set([...cfg.bots, ...user.bots.map(norm)])];
+  if (user.coauthorNames) cfg.coauthorNames = [...new Set([...cfg.coauthorNames, ...user.coauthorNames.map(norm)])];
+  if (user.coab === false) cfg.coab = false;
   if (user.rates) cfg.rates = { ...DEFAULT_RATES, ...user.rates, larger: { ...DEFAULT_RATES.larger, ...(user.rates.larger || {}) } };
   return cfg;
 }
@@ -148,6 +175,41 @@ async function gh(path, token) {
   }
 }
 
+async function ghPost(path, token, body) {
+  const res = await fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'costgrep',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`GitHub API ${res.status} on ${path}: ${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
+async function listOrgRepos(org, token, limit) {
+  const out = [];
+  for (let page = 1; ; page++) {
+    const q = `?sort=pushed&direction=desc&per_page=100&page=${page}`;
+    let data;
+    try {
+      data = await gh(`/orgs/${org}/repos${q}`, token);
+    } catch (e) {
+      if (String(e.message).includes(' 404 ')) data = await gh(`/users/${org}/repos${q}`, token); // user account
+      else throw e;
+    }
+    for (const r of (Array.isArray(data) ? data : [])) {
+      out.push(r.full_name);
+      if (out.length >= limit) return out;
+    }
+    if (!Array.isArray(data) || data.length < 100) return out;
+  }
+}
+
 async function listRuns(repo, sinceIso, token, maxRuns) {
   const runs = [];
   for (let page = 1; ; page++) {
@@ -178,6 +240,16 @@ function norm(login) {
   return String(login || '').toLowerCase().replace(/\[bot\]$/, '').trim();
 }
 
+// Co-Authored-By trailers in the head commit message: a human-triggered run whose
+// commit was co-authored by an AI agent. Known limit (stated in methodology): some
+// editors (e.g. VS Code) auto-insert the Copilot trailer — so this is a separate
+// `agent-assisted` class, never silently merged into `agent`.
+function coAuthoredByAgent(message, cfg) {
+  if (!cfg.coab || !message) return false;
+  const trailers = String(message).match(/co-authored-by:[^\r\n]+/gi) || [];
+  return trailers.some(t => cfg.coauthorNames.some(n => norm(t).includes(norm(n))));
+}
+
 function classifyActor(run, cfg) {
   // triggering_actor is who effectively caused this execution: the re-runner for
   // re-runs, and the honest identity for workflow_run chains (github.actor may
@@ -188,7 +260,10 @@ function classifyActor(run, cfg) {
   const n = norm(login);
   if (!n) return { login, klass: 'unattributed' };
   if (cfg.agents.some(a => n.includes(norm(a)))) return { login, klass: 'agent' };
-  if (type === 'User') return { login, klass: 'human' };
+  if (type === 'User') {
+    if (coAuthoredByAgent(run.head_commit?.message, cfg)) return { login, klass: 'agent-assisted' };
+    return { login, klass: 'human' };
+  }
   if (cfg.bots.includes(n) || type === 'Bot' || login.endsWith('[bot]')) return { login, klass: 'bot' };
   return { login, klass: 'unattributed' };
 }
@@ -387,6 +462,71 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
   };
 }
 
+// Org mode: aggregate per-repo reports into one org-level report. Windows vary
+// per repo (--max-runs cap per repo) — stated in provenance, never averaged away.
+function buildOrgReport(org, reports) {
+  const totals = Object.fromEntries(CLASS_ORDER.map(k => [k, { runs: 0, jobs: 0, minutes: 0, cost: 0 }]));
+  const selfHosted = { jobs: 0, minutes: 0 };
+  let totalMinutes = 0, totalCost = 0, runsAnalyzed = 0, jobsCounted = 0, inProgressJobs = 0;
+  let rateFallbackJobs = 0, skippedJobs = 0, skippedCost = 0, zeroDurationJobs = 0, zeroDurationCost = 0;
+  const actors = new Map();
+  for (const r of reports) {
+    for (const k of CLASS_ORDER) {
+      totals[k].runs += r.totals[k].runs; totals[k].jobs += r.totals[k].jobs;
+      totals[k].minutes += r.totals[k].minutes; totals[k].cost += r.totals[k].cost;
+    }
+    selfHosted.jobs += r.selfHosted.jobs; selfHosted.minutes += r.selfHosted.minutes;
+    totalMinutes += r.totalMinutes; totalCost += r.totalCost;
+    runsAnalyzed += r.runsAnalyzed; jobsCounted += r.jobsCounted; inProgressJobs += r.inProgressJobs;
+    rateFallbackJobs += r.rateFallbackJobs;
+    skippedJobs += r.skippedJobs; skippedCost += r.skippedCost;
+    zeroDurationJobs += r.zeroDurationJobs; zeroDurationCost += r.zeroDurationCost;
+    // topActors are per-repo top-8 — the merged view is approximate for large orgs
+    for (const a of r.topActors) {
+      if (!actors.has(a.login)) actors.set(a.login, { ...a });
+      else { const x = actors.get(a.login); x.runs += a.runs; x.minutes += a.minutes; x.cost += a.cost; }
+    }
+  }
+  const pct = (x, of) => (of > 0 ? (100 * x) / of : 0);
+  for (const k of CLASS_ORDER) {
+    totals[k].pctCost = pct(totals[k].cost, totalCost);
+    totals[k].pctRuns = pct(totals[k].runs, runsAnalyzed);
+  }
+  const froms = reports.map(r => r.window.from).filter(Boolean).sort();
+  return {
+    repo: `org: ${org}`,
+    org: true,
+    reposAnalyzed: reports.length,
+    window: { days: reports[0]?.window.days, from: froms[0] ?? null, to: froms[froms.length - 1] ?? null },
+    generatedAt: new Date().toISOString(),
+    pricingModel: reports[0]?.pricingModel,
+    totals,
+    topReposByCost: [...reports].sort((a, b) => b.totalCost - a.totalCost).slice(0, 5)
+      .map(r => ({ repo: r.repo, runs: r.runsAnalyzed, minutes: Math.round(r.totalMinutes), cost: r.totalCost, agentPct: r.totals.agent.pctCost })),
+    topActors: [...actors.values()].sort((a, b) => b.cost - a.cost).slice(0, 8),
+    runsAnalyzed, jobsCounted, totalMinutes, totalCost, selfHosted, inProgressJobs,
+    rateFallbackJobs, skippedJobs, skippedCost, zeroDurationJobs, zeroDurationCost,
+    evidence: [], // per-repo evidence lives in each repo report (org report is the aggregate)
+    provenance: {
+      repoVisibility: 'mixed — per-repo in each repo report',
+      dataSources: [
+        'GET /orgs/{org}/repos (or /users/{login}/repos) — repo list sorted by last push',
+        'GET /repos/{repo}/actions/runs (workflow-run metadata)',
+        'GET /repos/{repo}/actions/runs/{id}/jobs (job metadata, latest attempt per job)',
+        'GET /repos/{repo} (repository visibility: public/private)',
+      ],
+      neverAccessed: 'repository code, logs, secrets — workflow metadata only',
+      attribution: 'run.triggering_actor (fallback run.actor) -> agent | human | bot | unattributed (+ agent-assisted via Co-Authored-By when enabled)',
+      rates: 'GitHub-hosted list prices effective 2026-01-01 — docs.github.com/en/billing/reference/actions-runner-pricing',
+      ratesVersion: '2026-01-01',
+      selfHostedPolicy: '$0/min while the $0.002 platform fee is postponed; minutes still counted',
+      orgMode: `per-repo windows vary — ${reports.length} repos, each capped at its --max-runs most recent runs`,
+      skippedPolicy: 'jobs holding runner timestamps (incl. conclusion=skipped / zero duration) are billed at the 1-min minimum and reported separately — subtract them if your invoice proves GitHub does not bill such executions',
+      deterministic: 'same repos + windows -> same numbers',
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
@@ -412,9 +552,13 @@ function renderTable(rep) {
   const a = rep.totals.agent;
   L.push(`>>> Agents cost ${money(a.cost)} (${a.pctCost.toFixed(1)}% of CI spend, ${a.runs} runs / ${a.pctRuns.toFixed(1)}%).`);
   L.push(`>>> Bot runs: ${rep.totals.bot.runs} (${rep.totals.bot.pctRuns.toFixed(1)}% of all runs), bot spend ${money(rep.totals.bot.cost)}.`);
-  if (rep.topWorkflowsByCost.length) {
+  if (rep.topWorkflowsByCost?.length) {
     L.push('>>> Top workflows by total cost:');
     for (const w of rep.topWorkflowsByCost) L.push(`    ${money(w.cost).padStart(10)}  ${w.pctOfTotal.toFixed(1).padStart(5)}%  ${w.workflow}`);
+  }
+  if (rep.topReposByCost?.length) {
+    L.push('>>> Top repos by total cost (agent% of that repo):');
+    for (const r of rep.topReposByCost) L.push(`    ${money(r.cost).padStart(10)}  ${r.agentPct.toFixed(1).padStart(5)}%  ${r.repo}`);
   }
   if (rep.rateFallbackJobs > 0) L.push(`>>> honesty note: ${rep.rateFallbackJobs} jobs had unrecognized runner labels — priced at the standard Linux rate.`);
   const q = rep.skippedJobs + rep.zeroDurationJobs;
@@ -431,7 +575,8 @@ function renderMarkdown(rep) {
     const t = rep.totals[k];
     return `| ${k} | ${t.runs} | ${t.pctRuns.toFixed(1)}% | ${Math.round(t.minutes)} | ${money(t.cost)} | ${t.pctCost.toFixed(1)}% |`;
   }).join('\n');
-  const wf = rep.topWorkflowsByCost.map(w => `| ${w.workflow} | ${money(w.cost)} | ${w.pctOfTotal.toFixed(1)}% |`).join('\n');
+  const wf = (rep.topWorkflowsByCost || []).map(w => `| ${w.workflow} | ${money(w.cost)} | ${w.pctOfTotal.toFixed(1)}% |`).join('\n');
+  const repos = (rep.topReposByCost || []).map(r => `| ${r.repo} | ${money(r.cost)} | ${r.agentPct.toFixed(1)}% |`).join('\n');
   const p = rep.provenance;
   return `## 🤖 costgrep — ${rep.repo}
 
@@ -446,6 +591,7 @@ Top workflows by cost:
 | workflow | cost | % |
 |---|---|---|
 ${wf}
+${repos ? `\nTop repos by cost (agent% of repo):\n\n| repo | cost | agent% |\n|---|---|---|\n${repos}` : ''}
 
 ### Where these numbers come from
 
@@ -482,6 +628,7 @@ function outputsFor(rep) {
     'total-minutes': String(Math.round(rep.totalMinutes)),
     'agent-cost': rep.totals.agent.cost.toFixed(4),
     'agent-share-pct': rep.totals.agent.pctCost.toFixed(1),
+    'agent-assisted-cost': (rep.totals['agent-assisted']?.cost ?? 0).toFixed(4),
     'agent-runs': String(rep.totals.agent.runs),
     'bot-runs': String(rep.totals.bot.runs),
     'bot-runs-pct': rep.totals.bot.pctRuns.toFixed(1),
@@ -494,30 +641,60 @@ function outputsFor(rep) {
 async function main() {
   const args = parseCli();
   const cfg = loadConfig(args.config);
+  if (args['no-coab']) cfg.coab = false;
   const since = new Date(Date.now() - args.days * 86_400_000);
+  const token = args.token || process.env.GITHUB_TOKEN;
 
-  let runs, jobsByRun;
-  let vis = 'unknown';
+  let rep;
   if (args['fixture-dir']) {
     const dir = args['fixture-dir'];
-    runs = JSON.parse(readFileSync(`${dir}/runs.json`, 'utf8'));
-    jobsByRun = new Map(runs.map(r => [r.id, r.jobs || []]));
+    let runs = JSON.parse(readFileSync(`${dir}/runs.json`, 'utf8'));
+    const jobsByRun = new Map(runs.map(r => [r.id, r.jobs || []]));
     runs = runs.filter(r => !r.created_at || new Date(r.created_at) >= since).slice(0, args['max-runs']);
+    rep = buildReport(args.repo || '(fixture)', runs, jobsByRun, cfg, args.days);
+  } else if (args.org) {
+    if (args['pr-comment']) throw new Error('--pr-comment works with --repo, not --org');
+    const repos = await listOrgRepos(args.org, token, args.repos);
+    if (!repos.length) throw new Error(`no repositories visible for ${args.org} — check the org/user name and token scope`);
+    const reports = [];
+    for (let i = 0; i < repos.length; i++) {
+      const r = repos[i];
+      const vis = await repoVisibility(r, token);
+      const rr = await listRuns(r, since, token, args['max-runs']);
+      if (!rr.length) continue;
+      const jm = new Map();
+      for (const run of rr) jm.set(run.id, await listJobs(r, run.id, token));
+      const one = buildReport(r, rr, jm, cfg, args.days, vis);
+      reports.push(one);
+      if (!args.quiet) console.error(`  [${i + 1}/${repos.length}] ${r}: ${rr.length} runs, $${one.totalCost.toFixed(2)}`);
+    }
+    if (!reports.length) throw new Error(`no workflow runs in the last ${args.days} days across ${repos.length} most-recently-pushed repos of ${args.org}`);
+    rep = buildOrgReport(args.org, reports);
   } else {
-    if (!args.repo) throw new Error('--repo owner/name (or GITHUB_REPOSITORY) required');
-    const token = args.token || process.env.GITHUB_TOKEN;
-    vis = await repoVisibility(args.repo, token);
-    runs = await listRuns(args.repo, since, token, args['max-runs']);
-    jobsByRun = new Map();
+    if (!args.repo) throw new Error('--repo owner/name (or --org NAME, or GITHUB_REPOSITORY) required');
+    const vis = await repoVisibility(args.repo, token);
+    const runs = await listRuns(args.repo, since, token, args['max-runs']);
+    const jobsByRun = new Map();
     let done = 0;
     for (const run of runs) {
       jobsByRun.set(run.id, await listJobs(args.repo, run.id, token));
       if (!args.quiet && ++done % 50 === 0) console.error(`  ...fetched jobs for ${done}/${runs.length} runs`);
     }
+    rep = buildReport(args.repo, runs, jobsByRun, cfg, args.days, vis);
   }
 
-  const rep = buildReport(args.repo || '(fixture)', runs, jobsByRun, cfg, args.days, vis);
   console.log(renderTable(rep));
+
+  if (args['pr-comment']) {
+    const n = args['pr-comment'] === 'auto'
+      ? (process.env.GITHUB_REF?.match(/^refs\/pull\/(\d+)\//) || [])[1]
+      : args['pr-comment'];
+    if (!/^\d+$/.test(String(n))) {
+      throw new Error(`--pr-comment: expected a PR number or "auto" (got "${args['pr-comment']}"; GITHUB_REF=${process.env.GITHUB_REF || 'unset'})`);
+    }
+    const posted = await ghPost(`/repos/${args.repo}/issues/${n}/comments`, token, { body: renderMarkdown(rep) + '\n<!-- costgrep report -->' });
+    console.error(`report posted to PR #${n}: ${posted.html_url}`);
+  }
 
   if (args['json-file']) {
     writeFileSync(args['json-file'], JSON.stringify(rep, null, 2));
@@ -545,4 +722,4 @@ if (invokedDirectly) {
   main().catch(e => { console.error(`error: ${e.message}`); process.exit(1); });
 }
 
-export { classifyActor, jobMinutes, inferRate, buildReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, norm };
+export { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, DEFAULT_COAUTHORS, norm };

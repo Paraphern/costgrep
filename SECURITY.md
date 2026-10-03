@@ -22,8 +22,13 @@ and makes outbound calls **only** to `api.github.com`:
 - `GET /repos/{repo}` — repository visibility (public/private), nothing else.
 
 Environment variables it reads: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`,
-`GITHUB_STEP_SUMMARY` (append the Markdown report), and `COSTGREP_NO_WAIT`
-(skip the rate-limit retry sleep). No others.
+`GITHUB_REF` (resolve `--pr-comment auto`), `GITHUB_STEP_SUMMARY` (append the
+Markdown report), and `COSTGREP_NO_WAIT` (skip the rate-limit retry sleep).
+No others.
+
+**The one write call:** everything above is read-only. The single exception is
+`--pr-comment`, which you must pass explicitly — it POSTs the Markdown report
+to `POST /repos/{repo}/issues/{pr}/comments` and nothing else.
 
 It never reads: repository code, job logs, step output, secrets, or any billing
 endpoint (those need org-admin rights this tool does not ask for).
