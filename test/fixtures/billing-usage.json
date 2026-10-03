@@ -1,0 +1,7 @@
+[
+  { "date": "2026-09-01", "product": "actions", "sku": "actions_linux", "quantity": 800, "unitType": "minute", "pricePerUnit": 0.006, "grossAmount": 4.8, "discountAmount": 0, "netAmount": 4.8, "organizationName": "acme", "repositoryName": "acme/one" },
+  { "date": "2026-09-02", "product": "actions", "sku": "actions_linux", "quantity": 200, "unitType": "minute", "pricePerUnit": 0.006, "grossAmount": 1.2, "discountAmount": 0, "netAmount": 1.2, "organizationName": "acme", "repositoryName": "acme/two" },
+  { "date": "2026-09-03", "product": "actions", "sku": "actions_macos", "quantity": 100, "unitType": "minute", "pricePerUnit": 0.062, "grossAmount": 6.2, "discountAmount": 0, "netAmount": 6.2, "organizationName": "acme", "repositoryName": "acme/one" },
+  { "date": "2026-09-04", "product": "actions", "sku": "actions_linux", "quantity": 300, "unitType": "minute", "pricePerUnit": 0.006, "grossAmount": 1.8, "discountAmount": 0, "netAmount": 1.8, "organizationName": "acme", "repositoryName": "acme/unscanned-repo" },
+  { "date": "2026-09-05", "product": "copilot", "sku": "copilot_business", "quantity": 1, "unitType": "seat", "pricePerUnit": 19.0, "grossAmount": 19.0, "discountAmount": 0, "netAmount": 19.0, "organizationName": "acme" }
+]

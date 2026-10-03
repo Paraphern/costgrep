@@ -11,7 +11,7 @@ const CLI = join(ROOT, 'scripts', 'costgrep.mjs');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'demo-repo');
 
 const mod = await import(`file://${CLI.replace(/\\/g, '/')}`);
-const { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, norm, DEFAULT_RATES, DEFAULT_COAUTHORS } = mod;
+const { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, monthBounds, prevMonth, norm, DEFAULT_RATES, DEFAULT_COAUTHORS } = mod;
 
 const run = (overrides = {}) => {
   const actor = overrides.actor ?? { login: 'x', type: 'User' };
@@ -267,6 +267,66 @@ test('fixture report (unknown visibility) carries no guess about billing', () =>
   assert.ok(!t.includes('repo: standard Linux/Windows'), t);
   const md = renderMarkdown(rep);
   assert.ok(md.includes('(could not determine)'), md);
+});
+
+test('reconcile: delta lands in the honest unattributed bucket, with coverage warnings', () => {
+  const billing = JSON.parse(readFileSync(join(ROOT, 'test/fixtures/billing-usage.json'), 'utf8'));
+  // our side: two repo reports whose evidence covers acme/one (linux $4.80 + macos $6.20)
+  // and acme/two (linux $1.20); acme/unscanned-repo ($1.80) stays outside -> delta
+  const mkRep = (repo, rows) => {
+    const r = buildReport(repo, [], new Map(), cfg, 30);
+    r.evidence = rows.map(([sku, cost]) => ({ sku, cost_usd: cost }));
+    r.totalCost = rows.reduce((s, [, c]) => s + c, 0);
+    return r;
+  };
+  const reports = [mkRep('acme/one', [['actions_linux', 4.8], ['actions_macos', 6.2]]), mkRep('acme/two', [['actions_linux', 1.2]])];
+  const rec = buildReconciliation(billing, reports, { reposScanned: 2, reposInBilling: 3, runsCapped: false });
+  // billing actions total: 4.8+1.2+6.2+1.8 = 14.0 (copilot seat product excluded)
+  approx(rec.billingTotal, 14.0);
+  approx(rec.ourTotal, 12.2);
+  approx(rec.delta, 1.8);            // the unscanned repo
+  approx(rec.deltaPct, 12.857, 1e-3);
+  approx(rec.unattributed, 1.8);
+  assert.equal(rec.overattributed, 0);
+  const linuxRow = rec.perSku.find(s => s.sku === 'actions_linux');
+  approx(linuxRow.billing, 7.8);     // 4.8 + 1.2 + 1.8
+  approx(linuxRow.ours, 6.0);
+  assert.ok(rec.warnings.some(w => w.includes('coverage: billing names 3 repositories')), rec.warnings.join('|'));
+  assert.ok(!rec.warnings.some(w => w.includes('--max-runs cap')));
+  const out = renderReconciliation(rec, 'org: acme', 2026, 9);
+  assert.ok(out.includes("unattributed (billing sees it, we can't attribute): $1.80"), out);
+  assert.ok(out.includes('EXPERIMENTAL'), out);
+  assert.ok(out.includes('2026-09'), out);
+  // overattribution is shown as a warning, not swallowed
+  const rec2 = buildReconciliation(billing, [mkRep('acme/one', [['actions_linux', 99]])], { reposScanned: 1, reposInBilling: 3, runsCapped: true });
+  assert.ok(rec2.overattributed > 0);
+  assert.ok(renderReconciliation(rec2, 'x', 2026, 9).includes('we attribute MORE than billing'), 'overattr shown');
+  assert.ok(rec2.warnings.some(w => w.includes('--max-runs cap')));
+});
+
+test('credits render: by-model table, per-user caveat, experimental label', () => {
+  const data = JSON.parse(readFileSync(join(ROOT, 'test/fixtures/ai-credits.json'), 'utf8'));
+  const out = renderCredits(data, 'org: acme', 2026, 9);
+  assert.ok(out.includes('claude-4.6-sonnet'), out);
+  assert.ok(out.includes('gpt-5-codex'), out);
+  assert.ok(out.includes('TOTAL AI CREDITS'), out);
+  assert.ok(out.includes('$105.00'), out);
+  assert.ok(out.includes('per-user breakdown is not exposed'), out);
+  assert.ok(out.includes('EXPERIMENTAL'), out);
+});
+
+test('monthBounds and prevMonth are UTC-calendar exact', () => {
+  const { from, to } = monthBounds(2026, 9);
+  assert.equal(from.toISOString(), '2026-09-01T00:00:00.000Z');
+  assert.equal(to.toISOString(), '2026-10-01T00:00:00.000Z');
+  const dec = monthBounds(2026, 12);
+  assert.equal(dec.to.toISOString(), '2027-01-01T00:00:00.000Z');
+  const p = prevMonth(new Date('2026-01-15T00:00:00Z'));
+  assert.deepEqual(p, { year: 2025, month: 12 });
+});
+
+test('unknown subcommand fails honestly', () => {
+  assert.throws(() => execFileSync(process.execPath, [CLI, 'frobnicate'], { encoding: 'utf8', stdio: 'pipe' }), /unknown subcommand/);
 });
 
 test('CLI end-to-end on fixture: files on disk + gh-output', () => {

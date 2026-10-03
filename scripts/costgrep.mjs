@@ -210,13 +210,15 @@ async function listOrgRepos(org, token, limit) {
   }
 }
 
-async function listRuns(repo, sinceIso, token, maxRuns) {
+async function listRuns(repo, sinceIso, token, maxRuns, untilIso) {
   const runs = [];
   for (let page = 1; ; page++) {
     const data = await gh(`/repos/${repo}/actions/runs?per_page=100&page=${page}`, token);
     const batch = data.workflow_runs || [];
     for (const r of batch) {
-      if (r.created_at && new Date(r.created_at) < sinceIso) return runs; // sorted newest-first
+      const t = r.created_at && new Date(r.created_at);
+      if (t && t < sinceIso) return runs; // sorted newest-first
+      if (untilIso && t && t >= untilIso) continue; // past the window (recent first)
       runs.push(r);
       if (runs.length >= maxRuns) return runs;
     }
@@ -636,9 +638,205 @@ function outputsFor(rep) {
 }
 
 // ---------------------------------------------------------------------------
+// Reconciliation & AI credits (experimental — org billing endpoints)
+// ---------------------------------------------------------------------------
+// These subcommands read /organizations/{org}/settings/billing/* — the only
+// places in costgrep that require an org token with billing rights. They are
+// invoked explicitly (reconcile | credits) and everything they print carries
+// the experimental label: this code path is not yet validated against a live
+// billing account, so deltas are hypotheses until calibrated on an invoice.
+
+const EXPERIMENTAL = 'EXPERIMENTAL: not yet validated against a live billing account — treat deltas as hypotheses until calibrated (methodology in README).';
+
+function monthBounds(year, month) {
+  const from = new Date(Date.UTC(year, month - 1, 1));
+  const to = new Date(Date.UTC(year, month, 1)); // month is 1-based -> this is the 1st of the next month
+  return { from, to };
+}
+
+async function fetchBillingUsage(org, year, month, token) {
+  const data = await gh(`/organizations/${org}/settings/billing/usage?year=${year}&month=${month}`, token);
+  return data.usageItems || [];
+}
+
+async function fetchAiCredits(org, year, month, token, user) {
+  const u = user ? `&user=${encodeURIComponent(user)}` : '';
+  const data = await gh(`/organizations/${org}/settings/billing/ai_credit/usage?year=${year}&month=${month}${u}`, token);
+  return data;
+}
+
+// Pure: billing items + our per-repo reports -> the reconciliation verdict.
+// billingHasMore > 0 means money the invoice sees that we could not attribute.
+function buildReconciliation(billingItems, repoReports, coverage) {
+  const actions = billingItems.filter(i => /actions/i.test(String(i.product || '')));
+  const billingTotal = actions.reduce((s, i) => s + (i.netAmount || 0), 0);
+  const billingBySku = new Map();
+  for (const i of actions) billingBySku.set(i.sku, (billingBySku.get(i.sku) || 0) + (i.netAmount || 0));
+  const billingRepos = new Set(actions.map(i => i.repositoryName).filter(Boolean));
+
+  const ourBySku = new Map();
+  let ourTotal = 0;
+  for (const rep of repoReports) {
+    ourTotal += rep.totalCost;
+    for (const e of rep.evidence) ourBySku.set(e.sku, (ourBySku.get(e.sku) || 0) + e.cost_usd);
+  }
+
+  const skus = [...new Set([...billingBySku.keys(), ...ourBySku.keys()])].sort();
+  const perSku = skus.map(sku => {
+    const b = billingBySku.get(sku) || 0, o = ourBySku.get(sku) || 0;
+    return { sku, billing: b, ours: o, delta: b - o };
+  });
+  const delta = billingTotal - ourTotal;
+  const deltaPct = billingTotal > 0 ? (100 * delta) / billingTotal : 0;
+
+  const warnings = [];
+  if (coverage.reposScanned < coverage.reposInBilling) {
+    warnings.push(`coverage: billing names ${coverage.reposInBilling} repositories with Actions usage; we scanned ${coverage.reposScanned} most-recently-pushed (--repos) — unscanned repos land in the delta`);
+  }
+  if (coverage.runsCapped) warnings.push('coverage: at least one repo hit the --max-runs cap — runs beyond the cap are invisible to our side of the comparison');
+  if (!billingItems.length) warnings.push('billing returned zero usage items — check the org, the month, and that the org is on the enhanced billing platform');
+
+  return {
+    billingTotal, ourTotal, delta, deltaPct, perSku,
+    unattributed: delta > 0 ? delta : 0,
+    overattributed: delta < 0 ? -delta : 0,
+    billingRepos: billingRepos.size, warnings,
+    experimental: true,
+  };
+}
+
+function renderReconciliation(rec, orgLabel, year, month) {
+  const L = [];
+  L.push(`\ncostgrep reconcile — ${orgLabel} ${year}-${String(month).padStart(2, '0')} (billing API vs our recomputation)`);
+  L.push('='.repeat(78));
+  L.push('SKU                          billing $      ours $     delta $');
+  L.push('-'.repeat(78));
+  for (const s of rec.perSku) {
+    L.push(`${String(s.sku).padEnd(26)} ${s.billing.toFixed(2).padStart(9)} ${s.ours.toFixed(2).padStart(11)} ${s.delta.toFixed(2).padStart(11)}`);
+  }
+  L.push('-'.repeat(78));
+  L.push(`${'TOTAL'.padEnd(26)} ${rec.billingTotal.toFixed(2).padStart(9)} ${rec.ourTotal.toFixed(2).padStart(11)} ${rec.delta.toFixed(2).padStart(11)}  (${rec.deltaPct.toFixed(1)}%)`);
+  L.push('');
+  L.push(`>>> unattributed (billing sees it, we can't attribute): $${rec.unattributed.toFixed(2)}${rec.overattributed > 0 ? ` · we attribute MORE than billing: $${rec.overattributed.toFixed(2)} (check rate assumptions)` : ''}`);
+  for (const w of rec.warnings) L.push(`>>> ${w}`);
+  L.push(`>>> ${EXPERIMENTAL}`);
+  return L.join('\n');
+}
+
+function renderCredits(data, orgLabel, year, month) {
+  const items = data.usageItems || [];
+  const total = items.reduce((s, i) => s + (i.netAmount || 0), 0);
+  const byModel = new Map();
+  for (const i of items) byModel.set(i.model || '(unknown)', (byModel.get(i.model || '(unknown)') || 0) + (i.netAmount || 0));
+  const L = [];
+  L.push(`\ncostgrep credits — ${orgLabel} ${year}-${String(month).padStart(2, '0')} (AI credits from the billing API)`);
+  L.push('='.repeat(60));
+  for (const [model, cost] of [...byModel.entries()].sort((a, b) => b[1] - a[1])) {
+    L.push(`${String(model).padEnd(40)} $${cost.toFixed(2)}`);
+  }
+  L.push('-'.repeat(60));
+  L.push(`${'TOTAL AI CREDITS'.padEnd(40)} $${total.toFixed(2)}`);
+  L.push('');
+  L.push('>>> per-user breakdown is not exposed by the API — filter with --user <login>');
+  L.push(`>>> ${EXPERIMENTAL}`);
+  return L.join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
+function prevMonth(now = new Date()) {
+  const y = now.getUTCFullYear(), m = now.getUTCMonth() + 1;
+  return m === 1 ? { year: y - 1, month: 12 } : { year: y, month: m - 1 };
+}
+
+function parseSideArgs(kind) {
+  const { values } = parseArgs({
+    options: {
+      org: { type: 'string' },
+      month: { type: 'string' },           // YYYY-MM; default = previous full month
+      'billing-token': { type: 'string' }, // org token with billing rights (falls back to --token / GITHUB_TOKEN)
+      token: { type: 'string' },           // for run metadata (actions:read)
+      repos: { type: 'string', default: '20' },
+      'max-runs': { type: 'string' },
+      'json-file': { type: 'string' },
+      user: { type: 'string' },            // credits: filter by user
+      quiet: { type: 'boolean', default: false },
+      help: { type: 'boolean', default: false },
+    },
+    args: process.argv.slice(3),
+  });
+  if (values.help) {
+    console.log(`usage: costgrep.mjs ${kind} --org NAME [--month YYYY-MM] [--billing-token T]\n                 [--token T] [--repos N] [--max-runs N] [--json-file F]${kind === 'credits' ? ' [--user LOGIN]' : ''}`);
+    process.exit(0);
+  }
+  let year, month;
+  if (values.month) {
+    const m = values.month.match(/^(\d{4})-(\d{2})$/);
+    if (!m || +m[2] < 1 || +m[2] > 12) throw new Error(`invalid --month "${values.month}" — expected YYYY-MM`);
+    year = +m[1]; month = +m[2];
+  } else ({ year, month } = prevMonth());
+  values.year = year; values.month = month;
+  values.repos = Math.max(1, parseInt(values.repos, 10) || 20);
+  values['max-runs'] = parseInt(values['max-runs'] ?? '', 10) || 100;
+  if (values.org && !/^[A-Za-z0-9-]+$/.test(values.org)) throw new Error(`invalid --org "${values.org}"`);
+  return values;
+}
+
+async function orgReportsForWindow(org, from, to, cfg, token, reposLimit, maxRuns, quiet) {
+  const repos = await listOrgRepos(org, token, reposLimit);
+  const reports = [];
+  let runsCapped = false;
+  for (let i = 0; i < repos.length; i++) {
+    const r = repos[i];
+    const vis = await repoVisibility(r, token);
+    const rr = await listRuns(r, from, token, maxRuns, to);
+    if (rr.length >= maxRuns) runsCapped = true;
+    if (!rr.length) continue;
+    const jm = new Map();
+    for (const run of rr) jm.set(run.id, await listJobs(r, run.id, token));
+    const one = buildReport(r, rr, jm, cfg, Math.max(1, Math.round((to - from) / 86_400_000)), vis);
+    reports.push(one);
+    if (!quiet) console.error(`  [${i + 1}/${repos.length}] ${r}: ${rr.length} runs, $${one.totalCost.toFixed(2)}`);
+  }
+  return { repos, reports, runsCapped };
+}
+
+async function reconcileMain() {
+  const a = parseSideArgs('reconcile');
+  if (!a.org) throw new Error('reconcile: --org NAME required');
+  const cfg = loadConfig(null);
+  const runsToken = a.token || process.env.GITHUB_TOKEN;
+  const billingToken = a['billing-token'] || a.token || process.env.GITHUB_TOKEN;
+  const { from, to } = monthBounds(a.year, a.month);
+  const items = await fetchBillingUsage(a.org, a.year, a.month, billingToken);
+  const { repos, reports, runsCapped } = await orgReportsForWindow(a.org, from, to, cfg, runsToken, a.repos, a['max-runs'], a.quiet);
+  const billingRepos = new Set(items.filter(i => /actions/i.test(String(i.product || ''))).map(i => i.repositoryName).filter(Boolean)).size;
+  const rec = buildReconciliation(items, reports, { reposScanned: repos.length, reposInBilling: billingRepos, runsCapped });
+  console.log(renderReconciliation(rec, `org: ${a.org}`, a.year, a.month));
+  if (a['json-file']) writeFileSync(a['json-file'], JSON.stringify(rec, null, 2));
+}
+
+async function creditsMain() {
+  const a = parseSideArgs('credits');
+  if (!a.org) throw new Error('credits: --org NAME required');
+  const billingToken = a['billing-token'] || a.token || process.env.GITHUB_TOKEN;
+  let data;
+  try {
+    data = await fetchAiCredits(a.org, a.year, a.month, billingToken, a.user);
+  } catch (e) {
+    if (String(e.message).includes(' 404 ')) throw new Error(`no AI credit usage found for ${a.org} ${a.year}-${a.month} (404) — check the org, month, and that the org has AI credit billing`);
+    throw e;
+  }
+  console.log(renderCredits(data, `org: ${a.org}`, a.year, a.month));
+  if (a['json-file']) writeFileSync(a['json-file'], JSON.stringify(data, null, 2));
+}
+
 async function main() {
+  const sub = process.argv[2] && !process.argv[2].startsWith('-') ? process.argv[2] : null;
+  if (sub === 'reconcile') return reconcileMain();
+  if (sub === 'credits') return creditsMain();
+  if (sub) throw new Error(`unknown subcommand "${sub}" — use: reconcile | credits, or nothing for a report`);
   const args = parseCli();
   const cfg = loadConfig(args.config);
   if (args['no-coab']) cfg.coab = false;
@@ -722,4 +920,4 @@ if (invokedDirectly) {
   main().catch(e => { console.error(`error: ${e.message}`); process.exit(1); });
 }
 
-export { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, DEFAULT_COAUTHORS, norm };
+export { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, monthBounds, prevMonth, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, DEFAULT_COAUTHORS, norm };

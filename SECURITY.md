@@ -30,6 +30,12 @@ No others.
 `--pr-comment`, which you must pass explicitly — it POSTs the Markdown report
 to `POST /repos/{repo}/issues/{pr}/comments` and nothing else.
 
+**Billing endpoints (explicit subcommands only):** `reconcile` and `credits`
+additionally read `GET /organizations/{org}/settings/billing/usage` and
+`GET /organizations/{org}/settings/billing/ai_credit/usage` — the only places
+that need an org token with billing rights. They are never called by the
+default report, the composite action, or the fixture mode.
+
 It never reads: repository code, job logs, step output, secrets, or any billing
 endpoint (those need org-admin rights this tool does not ask for).
 

@@ -122,6 +122,26 @@ not just display it (per-actor budget enforcement GitHub's budgets API doesn't h
 | `agent-cost` / `agent-share-pct` / `agent-runs` | the AI-agent slice |
 | `bot-runs` / `bot-runs-pct` | automation share of runs |
 
+## Reconciliation & AI credits (experimental subcommands)
+
+For organizations that *can* provide an org token with billing rights (the one
+place costgrep ever asks for more than `actions:read`):
+
+```bash
+# our recomputation vs the billing API, per SKU, for a calendar month;
+# the delta lands in an explicit "unattributed" bucket with coverage warnings
+node scripts/costgrep.mjs reconcile --org my-org --month 2026-09 --billing-token $ORG_TOKEN
+
+# AI credits for the same month (by model; per-user breakdown is not exposed by the API)
+node scripts/costgrep.mjs credits --org my-org --month 2026-09 --billing-token $ORG_TOKEN
+```
+
+**Status, stated plainly: EXPERIMENTAL.** This code path is not yet validated
+against a live billing account — treat every delta as a hypothesis until
+calibrated on a real invoice (that calibration program is the 1.0 gate). Every
+output of these subcommands carries this label; the coverage warnings say
+exactly which repos/runs the comparison did and did not see.
+
 ## Evidence: every number is traceable
 
 Reports are self-describing — a human can check any figure against real API data:

@@ -1,0 +1,9 @@
+{
+  "timePeriod": { "year": 2026, "month": 9 },
+  "organization": "acme",
+  "usageItems": [
+    { "product": "copilot", "sku": "copilot_agent", "model": "claude-4.6-sonnet", "unitType": "credit", "pricePerUnit": 0.01, "grossQuantity": 8000, "grossAmount": 80.0, "discountQuantity": 0, "discountAmount": 0, "netQuantity": 8000, "netAmount": 80.0 },
+    { "product": "copilot", "sku": "copilot_agent", "model": "gpt-5-codex", "unitType": "credit", "pricePerUnit": 0.01, "grossQuantity": 2000, "grossAmount": 20.0, "discountQuantity": 0, "discountAmount": 0, "netQuantity": 2000, "netAmount": 20.0 },
+    { "product": "copilot", "sku": "copilot_completions", "model": "gpt-5-mini", "unitType": "credit", "pricePerUnit": 0.01, "grossQuantity": 500, "grossAmount": 5.0, "discountQuantity": 0, "discountAmount": 0, "netQuantity": 500, "netAmount": 5.0 }
+  ]
+}
