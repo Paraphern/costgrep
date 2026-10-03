@@ -98,6 +98,7 @@ function parseCli() {
       'md-file': { type: 'string' },       // write shareable Markdown report with provenance block
       'csv-file': { type: 'string' },      // write per-job evidence CSV (audit trail)
       'gh-output': { type: 'string' },     // append KEY=VALUE outputs to this file (GitHub $GITHUB_OUTPUT)
+      'slack-webhook': { type: 'string' }, // post the report to a Slack incoming webhook (https://hooks.slack.com/services/...)
       'step-summary': { type: 'boolean', default: false },
       quiet: { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
@@ -742,6 +743,33 @@ function renderCredits(data, orgLabel, year, month) {
   return L.join('\n');
 }
 
+// PR-scoped section for --pr-comment: everything whose head SHA == the PR head.
+function prSection(rep, runsArr, headSha) {
+  if (!headSha || !runsArr) return '';
+  const prRunIds = new Set(runsArr.filter(r => r.head_sha === headSha).map(r => r.id));
+  const rows = rep.evidence.filter(e => prRunIds.has(e.run_id));
+  if (!rows.length) return '';
+  const cost = rows.reduce((s, e) => s + e.cost_usd, 0);
+  const mins = rows.reduce((s, e) => s + e.minutes, 0);
+  const byClass = {};
+  for (const e of rows) byClass[e.class] = (byClass[e.class] || 0) + e.cost_usd;
+  const split = Object.entries(byClass).sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `${k} $${v.toFixed(2)}`).join(' · ');
+  return `\n### This PR's CI so far\n\n**${money(cost)} · ${Math.round(mins)} minutes** across ${prRunIds.size} runs on head \`${headSha.slice(0, 10)}\` (${split})\n`;
+}
+
+async function postSlack(url, text) {
+  if (!/^https:\/\/hooks\.slack\.com\/services\//.test(url)) {
+    throw new Error('--slack-webhook: expected an https://hooks.slack.com/services/... URL');
+  }
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: '```\n' + text.slice(0, 2900) + '\n```' }),
+  });
+  if (!res.ok) throw new Error(`Slack webhook responded ${res.status}`);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -844,11 +872,13 @@ async function main() {
   const token = args.token || process.env.GITHUB_TOKEN;
 
   let rep;
+  let runsArr = null;
   if (args['fixture-dir']) {
     const dir = args['fixture-dir'];
     let runs = JSON.parse(readFileSync(`${dir}/runs.json`, 'utf8'));
     const jobsByRun = new Map(runs.map(r => [r.id, r.jobs || []]));
     runs = runs.filter(r => !r.created_at || new Date(r.created_at) >= since).slice(0, args['max-runs']);
+    runsArr = runs;
     rep = buildReport(args.repo || '(fixture)', runs, jobsByRun, cfg, args.days);
   } else if (args.org) {
     if (args['pr-comment']) throw new Error('--pr-comment works with --repo, not --org');
@@ -872,6 +902,7 @@ async function main() {
     if (!args.repo) throw new Error('--repo owner/name (or --org NAME, or GITHUB_REPOSITORY) required');
     const vis = await repoVisibility(args.repo, token);
     const runs = await listRuns(args.repo, since, token, args['max-runs']);
+    runsArr = runs;
     const jobsByRun = new Map();
     let done = 0;
     for (const run of runs) {
@@ -890,8 +921,15 @@ async function main() {
     if (!/^\d+$/.test(String(n))) {
       throw new Error(`--pr-comment: expected a PR number or "auto" (got "${args['pr-comment']}"; GITHUB_REF=${process.env.GITHUB_REF || 'unset'})`);
     }
-    const posted = await ghPost(`/repos/${args.repo}/issues/${n}/comments`, token, { body: renderMarkdown(rep) + '\n<!-- costgrep report -->' });
+    const pr = await gh(`/repos/${args.repo}/pulls/${n}`, token);
+    const body = renderMarkdown(rep) + prSection(rep, runsArr, pr.head?.sha) + '\n<!-- costgrep report -->';
+    const posted = await ghPost(`/repos/${args.repo}/issues/${n}/comments`, token, { body });
     console.error(`report posted to PR #${n}: ${posted.html_url}`);
+  }
+
+  if (args['slack-webhook']) {
+    await postSlack(args['slack-webhook'], renderTable(rep));
+    console.error('report posted to Slack');
   }
 
   if (args['json-file']) {
@@ -920,4 +958,4 @@ if (invokedDirectly) {
   main().catch(e => { console.error(`error: ${e.message}`); process.exit(1); });
 }
 
-export { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, monthBounds, prevMonth, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, DEFAULT_COAUTHORS, norm };
+export { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, prSection, postSlack, monthBounds, prevMonth, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, DEFAULT_COAUTHORS, norm };

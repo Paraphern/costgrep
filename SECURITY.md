@@ -26,9 +26,11 @@ Environment variables it reads: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`,
 Markdown report), and `COSTGREP_NO_WAIT` (skip the rate-limit retry sleep).
 No others.
 
-**The one write call:** everything above is read-only. The single exception is
-`--pr-comment`, which you must pass explicitly — it POSTs the Markdown report
-to `POST /repos/{repo}/issues/{pr}/comments` and nothing else.
+**The two explicit write calls:** everything above is read-only. Exceptions,
+both opt-in flags you must pass yourself:
+- `--pr-comment` — POSTs the Markdown report to `POST /repos/{repo}/issues/{pr}/comments`;
+- `--slack-webhook URL` — POSTs `{"text": ...}` to the Slack incoming webhook you
+  provide (URL validated to be `https://hooks.slack.com/services/...`).
 
 **Billing endpoints (explicit subcommands only):** `reconcile` and `credits`
 additionally read `GET /organizations/{org}/settings/billing/usage` and

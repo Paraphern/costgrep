@@ -22,6 +22,9 @@ inputs:
   pr-comment:
     description: 'Optional: post the report as a PR comment (PR number, or "auto" to take it from GITHUB_REF; token needs pull-requests:write)'
     default: ''
+  slack-webhook:
+    description: 'Optional: post the report to a Slack incoming webhook (https://hooks.slack.com/services/... URL)'
+    default: ''
   json-file:
     description: 'Where to write the full JSON report (relative to workspace)'
     default: 'costgrep.json'
@@ -67,12 +70,14 @@ runs:
         CG_MD: ${{ inputs.md-file }}
         CG_CONFIG: ${{ inputs.config }}
         CG_PR: ${{ inputs.pr-comment }}
+        CG_SLACK: ${{ inputs.slack-webhook }}
       run: |
         ARGS=(--repo "$CG_REPO" --days "$CG_DAYS" --max-runs "$CG_MAX_RUNS" --token "$CG_TOKEN" --json-file "$CG_JSON" --gh-output "$GITHUB_OUTPUT" --step-summary)
         [ -n "$CG_CSV" ] && ARGS+=(--csv-file "$CG_CSV")
         [ -n "$CG_MD" ] && ARGS+=(--md-file "$CG_MD")
         [ -n "$CG_CONFIG" ] && ARGS+=(--config "$CG_CONFIG")
         [ -n "$CG_PR" ] && ARGS+=("--pr-comment=$CG_PR")
+        [ -n "$CG_SLACK" ] && ARGS+=("--slack-webhook=$CG_SLACK")
         node "${{ github.action_path }}/scripts/costgrep.mjs" "${ARGS[@]}"
 
 branding:

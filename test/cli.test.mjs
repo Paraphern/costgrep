@@ -11,7 +11,7 @@ const CLI = join(ROOT, 'scripts', 'costgrep.mjs');
 const FIXTURE = join(ROOT, 'test', 'fixtures', 'demo-repo');
 
 const mod = await import(`file://${CLI.replace(/\\/g, '/')}`);
-const { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, monthBounds, prevMonth, norm, DEFAULT_RATES, DEFAULT_COAUTHORS } = mod;
+const { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, prSection, postSlack, monthBounds, prevMonth, norm, DEFAULT_RATES, DEFAULT_COAUTHORS } = mod;
 
 const run = (overrides = {}) => {
   const actor = overrides.actor ?? { login: 'x', type: 'User' };
@@ -323,6 +323,31 @@ test('monthBounds and prevMonth are UTC-calendar exact', () => {
   assert.equal(dec.to.toISOString(), '2027-01-01T00:00:00.000Z');
   const p = prevMonth(new Date('2026-01-15T00:00:00Z'));
   assert.deepEqual(p, { year: 2025, month: 12 });
+});
+
+test('prSection: only this PR head SHA, with class split', () => {
+  const head = 'a'.repeat(40);
+  const runsArr = [
+    { id: 1, head_sha: head },
+    { id: 2, head_sha: 'b'.repeat(40) },
+  ];
+  const r = buildReport('x/y', [], new Map(), cfg, 30);
+  r.evidence = [
+    { run_id: 1, class: 'agent', minutes: 10, cost_usd: 0.06 },
+    { run_id: 1, class: 'human', minutes: 5, cost_usd: 0.03 },
+    { run_id: 2, class: 'human', minutes: 100, cost_usd: 9.99 },
+  ];
+  const s = prSection(r, runsArr, head);
+  assert.ok(s.includes("This PR's CI so far"), s);
+  assert.ok(s.includes('**$0.09 · 15 minutes**'), s);
+  assert.ok(s.includes('agent $0.06'), s);
+  assert.ok(!s.includes('9.99'), s); // other head SHA excluded
+  assert.equal(prSection(r, runsArr, null), '');
+});
+
+test('slack webhook: URL validated, refuses non-Slack targets', async () => {
+  await assert.rejects(() => postSlack('https://evil.example/hook', 'x'), /hooks\.slack\.com/);
+  await assert.rejects(() => postSlack('http://hooks.slack.com/services/x', 'x'), /https/);
 });
 
 test('unknown subcommand fails honestly', () => {

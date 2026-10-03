@@ -122,6 +122,34 @@ not just display it (per-actor budget enforcement GitHub's budgets API doesn't h
 | `agent-cost` / `agent-share-pct` / `agent-runs` | the AI-agent slice |
 | `bot-runs` / `bot-runs-pct` | automation share of runs |
 
+### Ready-made gates (copy-paste)
+
+```yaml
+# 1) Budget gate: fail CI when agents exceed 20% of spend
+- id: costgrep
+  uses: Paraphern/costgrep@v1
+- run: |
+    if (( $(echo "${{ steps.costgrep.outputs['agent-share-pct'] }} > 20" | bc -l) )); then
+      echo "::error::Agents at ${{ steps.costgrep.outputs['agent-cost'] }} (${{ steps.costgrep.outputs['agent-share-pct'] }}%) — above budget"
+      exit 1
+    fi
+
+# 2) Weekly org audit to Slack (secrets.SLACK_WEBHOOK; PAT with actions:read as CG_PAT)
+- uses: Paraphern/costgrep@v1
+  env:
+    CG_TOKEN: ${{ secrets.CG_PAT }}
+  with:
+    token: ${{ secrets.CG_PAT }}
+    slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+    days: '7'
+# (--org mode: run the CLI directly, see above)
+
+# 3) Cost stamp on every PR (needs pull-requests:write)
+- uses: Paraphern/costgrep@v1
+  with:
+    pr-comment: auto
+```
+
 ## Reconciliation & AI credits (experimental subcommands)
 
 For organizations that *can* provide an org token with billing rights (the one
