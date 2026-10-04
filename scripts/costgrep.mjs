@@ -22,7 +22,7 @@ import { parseArgs } from 'node:util';
 
 const API = process.env.COSTGREP_API || 'https://api.github.com'; // env override exists for local-mock verification only
 const HTTP_TIMEOUT = Math.max(1_000, parseInt(process.env.COSTGREP_TIMEOUT_MS, 10) || 30_000);
-const VERSION = '0.7.5'; // keep in sync with package.json
+const VERSION = '0.7.6'; // keep in sync with package.json
 
 // ---------------------------------------------------------------------------
 // Rate matrix — GitHub-hosted runners, list prices effective 2026-01-01.
@@ -938,9 +938,11 @@ async function main() {
     }
     const jobsByRun = new Map();
     let done = 0;
+    if (!args.quiet) console.error(`  fetching jobs for ${runs.length} runs (progress every 50)…`);
     for (const run of runs) {
       jobsByRun.set(run.id, await listJobs(args.repo, run.id, token));
-      if (!args.quiet && ++done % 50 === 0) console.error(`  ...fetched jobs for ${done}/${runs.length} runs`);
+      done++;
+      if (!args.quiet && (done === 10 || done % 50 === 0)) console.error(`  ...fetched jobs for ${done}/${runs.length} runs`);
     }
     rep = buildReport(args.repo, runs, jobsByRun, cfg, args.days, vis);
   }
