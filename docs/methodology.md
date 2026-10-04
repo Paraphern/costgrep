@@ -12,6 +12,8 @@ subcommand compares the two — see status below).
 
 ## Attribution
 
+**Known blind spot, stated up front:** attribution answers *"who triggered the run"*, not *"who wrote the code"*. A local coding agent that commits and pushes through a human's git credentials is invisible to trigger-actor attribution — GitHub sees the human's account on the push, so those runs are classified `human`. The counter-signals for agent-authored code pushed under human credentials are: AI `Co-Authored-By` trailers in commit messages (our `agent-assisted` class) and, in later versions, commit-author analysis. A repo built entirely by a local agent but pushed by its operator will honestly show up as `human` here.
+
 - **Identity = `run.triggering_actor`**, falling back to `run.actor`. Re-runs are
   attributed to whoever re-ran them. For `workflow_run` chains `github.actor` can
   resolve to a generic bot ([gh-aw#20586](https://github.com/github/gh-aw/issues/20586));
