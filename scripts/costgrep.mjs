@@ -22,7 +22,7 @@ import { parseArgs } from 'node:util';
 
 const API = process.env.COSTGREP_API || 'https://api.github.com'; // env override exists for local-mock verification only
 const HTTP_TIMEOUT = Math.max(1_000, parseInt(process.env.COSTGREP_TIMEOUT_MS, 10) || 30_000);
-const VERSION = '0.7.4'; // keep in sync with package.json
+const VERSION = '0.7.5'; // keep in sync with package.json
 
 // ---------------------------------------------------------------------------
 // Rate matrix — GitHub-hosted runners, list prices effective 2026-01-01.
@@ -175,7 +175,7 @@ async function gh(path, token) {
       if (attempt === 0) {
         const wait = Math.min(Math.max(reset - Date.now(), 2000), 60_000);
         if (!process.env.COSTGREP_NO_WAIT) {
-          console.error(`rate limit hit, retrying in ${Math.round(wait / 1000)}s`);
+          console.error(`rate limit hit (${token ? 'token' : 'anonymous access: 60 requests/hour'}), retrying in ${Math.round(wait / 1000)}s — pass --token (Actions:read) for 5000/hour`);
           await new Promise(r => setTimeout(r, wait));
           continue;
         }
@@ -933,6 +933,9 @@ async function main() {
     const vis = await repoVisibility(args.repo, token);
     const runs = await listRuns(args.repo, since, token, args['max-runs']);
     runsArr = runs;
+    if (!token && runs.length > 40) {
+      console.error(`hint: no --token given — anonymous access allows 60 requests/hour and this audit needs ~${runs.length + Math.ceil(runs.length / 100)} calls; it may fail mid-way. A fine-grained PAT with Actions:read raises the limit to 5000/hour.`);
+    }
     const jobsByRun = new Map();
     let done = 0;
     for (const run of runs) {
