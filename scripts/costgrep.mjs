@@ -21,6 +21,7 @@ import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs
 import { parseArgs } from 'node:util';
 
 const API = 'https://api.github.com';
+const VERSION = '0.7.1'; // keep in sync with package.json
 
 // ---------------------------------------------------------------------------
 // Rate matrix — GitHub-hosted runners, list prices effective 2026-01-01.
@@ -105,8 +106,9 @@ function parseCli() {
     },
   });
   if (values.help) {
-    console.log(`usage: costgrep.mjs [--repo owner/name | --org NAME [--repos N]] [--days 30] [--token TOKEN]
-                 [--max-runs N] [--config FILE] [--no-coab] [--pr-comment N|auto] [--fixture-dir DIR]
+    console.log(`costgrep v${VERSION} (Apache-2.0)
+usage: costgrep.mjs [reconcile|credits] | [--repo owner/name | --org NAME [--repos N]] [--days 30] [--token TOKEN]
+                 [--max-runs N] [--config FILE] [--no-coab] [--pr-comment N|auto] [--slack-webhook URL] [--fixture-dir DIR]
                  [--json-file FILE] [--md-file FILE] [--csv-file FILE]
                  [--gh-output FILE] [--step-summary] [--quiet]`);
     process.exit(0);
@@ -345,6 +347,13 @@ function visibilityNotice(rep) {
       : '');
   }
   if (v === 'private') return note('');
+  if (v === 'mixed' && rep.provenance.orgVisibility) {
+    const o = rep.provenance.orgVisibility;
+    const billed = o.billedEvenIfPublic || { jobs: 0, cost: 0 };
+    return `>>> org of mixed repos: ${o.public} public (standard Linux/Windows minutes FREE there) / ${o.private} private (list-price; included plan minutes first) / ${o.unknown} unknown.` +
+      (billed.jobs > 0 ? ` macOS/larger-runner jobs ARE billed even on public repos (~$${billed.cost.toFixed(2)} in this sample).` : '') +
+      ' The $ above is list-price VALUE of compute, not money owed.';
+  }
   return null; // unknown — stay silent rather than guess
 }
 
@@ -470,9 +479,11 @@ function buildReport(repo, runs, jobsByRun, cfg, days, repoVis = 'unknown') {
 function buildOrgReport(org, reports) {
   const totals = Object.fromEntries(CLASS_ORDER.map(k => [k, { runs: 0, jobs: 0, minutes: 0, cost: 0 }]));
   const selfHosted = { jobs: 0, minutes: 0 };
-  let totalMinutes = 0, totalCost = 0, runsAnalyzed = 0, jobsCounted = 0, inProgressJobs = 0;
+  let totalMinutes = 0, totalCost = 0, runsAnalyzed = 0, jobsCounted = 0, inProgressJobs = 0, jobsFetched = 0;
   let rateFallbackJobs = 0, skippedJobs = 0, skippedCost = 0, zeroDurationJobs = 0, zeroDurationCost = 0;
   const actors = new Map();
+  const vis = { public: 0, private: 0, unknown: 0 };
+  const billed = { jobs: 0, cost: 0 };
   for (const r of reports) {
     for (const k of CLASS_ORDER) {
       totals[k].runs += r.totals[k].runs; totals[k].jobs += r.totals[k].jobs;
@@ -481,9 +492,14 @@ function buildOrgReport(org, reports) {
     selfHosted.jobs += r.selfHosted.jobs; selfHosted.minutes += r.selfHosted.minutes;
     totalMinutes += r.totalMinutes; totalCost += r.totalCost;
     runsAnalyzed += r.runsAnalyzed; jobsCounted += r.jobsCounted; inProgressJobs += r.inProgressJobs;
+    jobsFetched += r.provenance.jobsFetched || 0;
     rateFallbackJobs += r.rateFallbackJobs;
     skippedJobs += r.skippedJobs; skippedCost += r.skippedCost;
     zeroDurationJobs += r.zeroDurationJobs; zeroDurationCost += r.zeroDurationCost;
+    const rv = r.provenance.repoVisibility;
+    if (rv === 'public' || rv === 'private') vis[rv]++; else vis.unknown++;
+    const b = r.provenance.billedEvenIfPublic || { jobs: 0, cost: 0 };
+    billed.jobs += b.jobs; billed.cost += b.cost;
     // topActors are per-repo top-8 — the merged view is approximate for large orgs
     for (const a of r.topActors) {
       if (!actors.has(a.login)) actors.set(a.login, { ...a });
@@ -511,7 +527,10 @@ function buildOrgReport(org, reports) {
     rateFallbackJobs, skippedJobs, skippedCost, zeroDurationJobs, zeroDurationCost,
     evidence: [], // per-repo evidence lives in each repo report (org report is the aggregate)
     provenance: {
-      repoVisibility: 'mixed — per-repo in each repo report',
+      repoVisibility: 'mixed',
+      orgVisibility: { ...vis, billedEvenIfPublic: billed },
+      jobsFetched,
+      inProgressExcluded: inProgressJobs,
       dataSources: [
         'GET /orgs/{org}/repos (or /users/{login}/repos) — repo list sorted by last push',
         'GET /repos/{repo}/actions/runs (workflow-run metadata)',
@@ -534,22 +553,23 @@ function buildOrgReport(org, reports) {
 // Rendering
 // ---------------------------------------------------------------------------
 const money = n => (n < 0 ? '-$' : '$') + Math.abs(n).toFixed(2);
+const CLASS_PAD = Math.max(...CLASS_ORDER.map(k => k.length));
 
 function renderTable(rep) {
   const L = [];
   L.push(`\ncostgrep — ${rep.repo} (last ${rep.window.days} days, ${rep.runsAnalyzed} runs, ${rep.jobsCounted} jobs)`);
-  L.push('='.repeat(72));
-  L.push('class      runs   run%    minutes       cost    cost%');
-  L.push('-'.repeat(72));
+  L.push('='.repeat(78));
+  L.push(`${'class'.padEnd(CLASS_PAD)}  runs   run%    minutes       cost    cost%`);
+  L.push('-'.repeat(78));
   for (const k of CLASS_ORDER) {
     const t = rep.totals[k];
     L.push(
-      `${k.padEnd(9)} ${String(t.runs).padStart(5)} ${t.pctRuns.toFixed(1).padStart(5)}%` +
+      `${k.padEnd(CLASS_PAD)} ${String(t.runs).padStart(5)} ${t.pctRuns.toFixed(1).padStart(5)}%` +
       ` ${String(Math.round(t.minutes)).padStart(9)} ${money(t.cost).padStart(10)} ${t.pctCost.toFixed(1).padStart(6)}%`
     );
   }
-  L.push('-'.repeat(72));
-  L.push(`${'total'.padEnd(9)} ${String(rep.runsAnalyzed).padStart(5)}        ${String(Math.round(rep.totalMinutes)).padStart(9)} ${money(rep.totalCost).padStart(10)}`);
+  L.push('-'.repeat(78));
+  L.push(`${'total'.padEnd(CLASS_PAD)} ${String(rep.runsAnalyzed).padStart(5)}        ${String(Math.round(rep.totalMinutes)).padStart(9)} ${money(rep.totalCost).padStart(10)}`);
   if (rep.selfHosted.jobs > 0) L.push(`(plus ${rep.selfHosted.jobs} self-hosted jobs, ${Math.round(rep.selfHosted.minutes)} min — $0 while the platform fee is postponed)`);
   L.push('');
   const a = rep.totals.agent;
@@ -589,16 +609,15 @@ function renderMarkdown(rep) {
 |---|---|---|---|---|---|
 ${rows}
 
-Top workflows by cost:
-
-| workflow | cost | % |
-|---|---|---|
-${wf}
-${repos ? `\nTop repos by cost (agent% of repo):\n\n| repo | cost | agent% |\n|---|---|---|\n${repos}` : ''}
+${wf ? `Top workflows by cost:\n\n| workflow | cost | % |\n|---|---|---|\n${wf}\n` : ''}${repos ? `\nTop repos by cost (agent% of repo):\n\n| repo | cost | agent% |\n|---|---|---|\n${repos}` : ''}
 
 ### Where these numbers come from
 
-- **Repo visibility:** ${p.repoVisibility}${p.repoVisibility === 'public' ? ` — standard Linux/Windows hosted minutes are **free** for public repositories; the $ figures are the list-price value of this compute, not money owed${p.billedEvenIfPublic.jobs > 0 ? `. Exception: ${p.billedEvenIfPublic.jobs} macOS/larger-runner jobs are billed even for public repos (~$${p.billedEvenIfPublic.cost.toFixed(2)}).` : '.'}` : p.repoVisibility === 'private' ? ' — list-price model; included plan minutes are consumed before these amounts reach the invoice.' : ' (could not determine).'}
+- **Repo visibility:** ${p.repoVisibility === 'mixed' && p.orgVisibility
+    ? `mixed — ${p.orgVisibility.public} public / ${p.orgVisibility.private} private / ${p.orgVisibility.unknown} unknown repos (per-repo detail in each repo report); macOS/larger-runner jobs are billed even on public repos${p.orgVisibility.billedEvenIfPublic.jobs > 0 ? ` (~$${p.orgVisibility.billedEvenIfPublic.cost.toFixed(2)} in this sample)` : ''}; the $ figures are list-price VALUE, not money owed`
+    : p.repoVisibility === 'public' ? `public — standard Linux/Windows hosted minutes are **free** for public repositories; the $ figures are the list-price value of this compute, not money owed${p.billedEvenIfPublic.jobs > 0 ? `. Exception: ${p.billedEvenIfPublic.jobs} macOS/larger-runner jobs are billed even for public repos (~$${p.billedEvenIfPublic.cost.toFixed(2)}).` : '.'}`
+    : p.repoVisibility === 'private' ? 'private — list-price model; included plan minutes are consumed before these amounts reach the invoice.'
+    : ' (could not determine).'}
 - **Data:** ${p.dataSources[0]}; ${p.dataSources[1]}. ${p.neverAccessed}.
 - **Window:** last ${rep.window.days} days (${rep.window.from ?? '—'} → ${rep.window.to ?? '—'}), ${rep.runsAnalyzed} runs, ${rep.jobsCounted} of ${p.jobsFetched} fetched jobs counted (${p.inProgressExcluded} in-progress jobs excluded).
 - **Attribution:** ${p.attribution}.

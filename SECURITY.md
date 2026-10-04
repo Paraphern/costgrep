@@ -15,7 +15,8 @@ Do not open public PRs that expose a vulnerability before it is fixed.
 ## What this tool touches (threat surface, be specific)
 
 costgrep runs **on your infrastructure** (your Actions runner or your terminal)
-and makes outbound calls **only** to `api.github.com`:
+and talks **only** to `api.github.com` (read-only by default — the two opt-in
+write flags and the read-only billing subcommands are spelled out below):
 
 - `GET /repos/{repo}/actions/runs` and `GET /repos/{repo}/actions/runs/{id}/jobs`
   — workflow-run and job **metadata** (actors, timestamps, labels, conclusions);
@@ -38,12 +39,14 @@ additionally read `GET /organizations/{org}/settings/billing/usage` and
 that need an org token with billing rights. They are never called by the
 default report, the composite action, or the fixture mode.
 
-It never reads: repository code, job logs, step output, secrets, or any billing
-endpoint (those need org-admin rights this tool does not ask for).
+It never reads: repository code, job logs, step output, or secrets — under any
+flag. (Billing endpoints are read by the explicit `reconcile`/`credits`
+subcommands only, with a token you pass for that purpose.)
 
-The GitHub token you pass is used solely in the `Authorization` header of those
-GET requests. It is never logged, stored, or transmitted anywhere else. The
-CLI is a single zero-dependency file — audit it in one read; there is no
+The GitHub token you pass is used solely in the `Authorization` header of the
+requests above. It is never logged, stored, or transmitted anywhere else. The
+CLI core is a single zero-dependency file (classifier lists live in a plain
+`agents.json` next to it) — audit it in one read; there is no
 postinstall, no network library, no telemetry.
 
 If your threat model requires it: run with a fine-grained PAT limited to

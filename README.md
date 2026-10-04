@@ -20,32 +20,36 @@ GitHub's own usage views don't tell you **who** spent it. This does:
 
 ```
 $ node scripts/costgrep.mjs --repo actions/stale --days 30 --max-runs 50 --quiet
-costgrep — actions/stale (last 30 days, 50 runs, 45 jobs)
-========================================================================
-class      runs   run%    minutes       cost    cost%
-------------------------------------------------------------------------
-agent         0   0.0%         0      $0.00    0.0%
-human        39  78.0%        47      $0.59   78.8%
-bot          11  22.0%        16      $0.16   21.2%
-unattributed     0   0.0%         0      $0.00    0.0%
-------------------------------------------------------------------------
-total        50               63      $0.75
+costgrep — actions/stale (last 30 days, 50 runs, 47 jobs)
+==============================================================================
+class           runs   run%    minutes       cost    cost%
+------------------------------------------------------------------------------
+agent              0   0.0%         0      $0.00    0.0%
+agent-assisted    14  28.0%        26      $0.28   36.8%
+human             25  50.0%        24      $0.33   42.5%
+bot               11  22.0%        16      $0.16   20.7%
+unattributed       0   0.0%         0      $0.00    0.0%
+------------------------------------------------------------------------------
+total             50               66      $0.77
 
 >>> Agents cost $0.00 (0.0% of CI spend, 0 runs / 0.0%).
 >>> Bot runs: 11 (22.0% of all runs), bot spend $0.16.
 >>> Top workflows by total cost:
-         $0.50   66.6%  Basic validation
-         $0.08   11.1%  Code scanning
-         $0.06    8.0%  Licensed
+         $0.50   65.0%  Basic validation
+         $0.10   12.4%  Code scanning
+         $0.06    7.8%  Licensed
 >>> public repo: standard Linux/Windows minutes are FREE — the $ above is the list-price VALUE of this compute (what it would cost in a private repo), not money owed. NOTE: 5 macOS/larger-runner jobs ARE billed even for public repos (~$0.37).
 >>> List-price model: NOT your invoice. Included plan minutes are consumed first; hosted phase reconciles against the billing API.
 ```
 
-*(Real snapshot taken 2026-10-02 with the exact command shown; rerun it and you get
-current numbers — and this README's own honesty notes print with every report.)*
+*(Real snapshot taken 2026-10-04 with the exact command shown; rerun it and you get
+current numbers. Note the `agent-assisted` row: 14 of 50 runs in this repo were
+pushed by humans with an AI `Co-Authored-By` trailer — that's the class doing its job.)*
 
 Runs **on your infrastructure** (your Actions runner, your terminal). Zero npm
-dependencies, one file, no telemetry, no code/log access — workflow-run metadata only.
+dependencies (single-file CLI core + a plain `agents.json` for the classifier
+lists — the core works standalone if the data file is missing), no telemetry,
+no code/log access — workflow-run metadata only.
 
 ## Quick start (composite action)
 
@@ -79,7 +83,7 @@ No org-admin rights, no billing access, no webhook — the repo-scoped
 node scripts/costgrep.mjs --repo owner/name [--days 30] [--token $GITHUB_TOKEN] \
   [--max-runs 1000] [--config my-rules.json] [--json-file report.json] \
   [--csv-file evidence.csv] [--md-file report.md] [--gh-output $GITHUB_OUTPUT] \
-  [--no-coab] [--pr-comment N|auto] [--step-summary] [--quiet] [--help]
+  [--no-coab] [--pr-comment N|auto] [--slack-webhook URL] [--step-summary] [--quiet] [--help]
 # org-wide audit (still no org-admin rights — a PAT with actions:read is enough):
 node scripts/costgrep.mjs --org my-org [--repos 20] [--max-runs 100]
 # offline demo on a bundled fixture:
@@ -120,6 +124,7 @@ not just display it (per-actor budget enforcement GitHub's budgets API doesn't h
 |---|---|
 | `total-cost` / `total-minutes` | whole-window list-price spend / billable minutes |
 | `agent-cost` / `agent-share-pct` / `agent-runs` | the AI-agent slice |
+| `agent-assisted-cost` | human-triggered runs with an AI `Co-Authored-By` trailer |
 | `bot-runs` / `bot-runs-pct` | automation share of runs |
 
 ### Ready-made gates (copy-paste)

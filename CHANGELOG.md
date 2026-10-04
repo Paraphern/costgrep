@@ -4,6 +4,21 @@ All notable changes to costgrep. Format: [Keep a Changelog](https://keepachangel
 versions follow semver. Pre-1.0 breaking changes are possible in minor bumps and are
 marked **BREAKING** below.
 
+## [0.7.1] — 2026-10-04
+### Fixed (verification round 2 findings)
+- Org-mode Markdown printed `undefined` for jobs-fetched / in-progress counts —
+  org provenance now carries `jobsFetched`, `inProgressExcluded`, `orgVisibility`.
+- Org reports now carry the money notice (compatibility contract): mixed
+  public/private described with the macOS/larger-runner exception and cost.
+- SECURITY.md self-contradiction removed ("only api.github.com" / "never reads
+  billing endpoints" vs the opt-in sections); surface statement now exact.
+- `--help` shows the version and `--slack-webhook` (contract: help stays complete).
+- README: fresh dated snapshot (now includes the `agent-assisted` row — 14 of 50
+  runs in the example repo), `--slack-webhook` in the flags, `agent-assisted-cost`
+  in the outputs table, "single-file core + agents.json" phrasing.
+- Table alignment fits the longest class name; org Markdown skips empty tables.
+- v0.4.0 release notes: reproducibility command for the first agent-assisted catch.
+
 ## [0.7.0] — 2026-10-04
 ### Added
 - Stability contract (docs/compatibility.md): what is frozen in the JSON report,

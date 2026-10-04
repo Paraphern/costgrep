@@ -76,8 +76,29 @@ test('org mode: aggregates per-repo reports honestly', () => {
   const t = renderTable(org);
   assert.ok(t.includes('org: acme'), t);
   assert.ok(t.includes('Top repos by total cost'), t);
+  assert.ok(t.includes('org of mixed repos'), t); // money notice for orgs (compatibility contract)
   const o = outputsFor(org);
   assert.equal(o['agent-assisted-cost'], '0.0000');
+});
+
+test('org markdown: no undefined, mixed visibility described, no empty tables', () => {
+  const mk = (repo, vis) => {
+    const r = buildReport(repo, [], new Map(), cfg, 30);
+    r.provenance.repoVisibility = vis;
+    r.provenance.jobsFetched = 10;
+    r.window = { days: 30, from: '2026-10-01T00:00:00Z', to: '2026-10-02T00:00:00Z' };
+    r.topActors = [];
+    return r;
+  };
+  const org = buildOrgReport('acme', [mk('a/one', 'public'), mk('a/two', 'private')]);
+  const md = renderMarkdown(org);
+  assert.ok(!md.includes('undefined'), md);
+  assert.ok(md.includes('1 public / 1 private'), md);
+  assert.ok(md.includes('list-price VALUE'), md);
+  assert.ok(!md.includes('| workflow | cost | % |'), md); // no empty workflows table in org reports
+  const table = renderTable(org);
+  assert.ok(!table.includes('undefined'), table);
+  assert.ok(table.includes('agent-assisted'), table); // class column fits the longest name
 });
 
 test('classifies humans and automation bots', () => {
