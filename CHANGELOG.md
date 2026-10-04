@@ -11,6 +11,15 @@ marked **BREAKING** below.
   "too similar to `postgres`"; repo/action/branding remain `costgrep`.
 - README: npm badge + Install section with the naming note.
 
+## [Unreleased]
+### Fixed
+- Error messages: a timeout while *reading* the response body (stalled mid-stream) now
+  reports the same explicit `GitHub API timeout … after Ns` form as connect timeouts
+  (was a raw "The operation was aborted due to timeout"); garbage bodies report
+  `invalid JSON from <path>` instead of the raw parser text. Found by the npm-artifact
+  verification round (which otherwise passed in full — including the former
+  0xC0000409 crash case, now a clean exit 1).
+
 ## [0.7.3] — 2026-10-04
 ### Fixed (external edge-harness findings)
 - **Per-request HTTP timeout** (default 30 s, `COSTGREP_TIMEOUT_MS` to override):

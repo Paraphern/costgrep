@@ -183,7 +183,14 @@ async function gh(path, token) {
       throw new Error(`GitHub API rate limited on ${path} (403/429). Pass --token or narrow --days/--max-runs.`);
     }
     if (!res.ok) throw new Error(`GitHub API ${res.status} on ${path}: ${(await res.text()).slice(0, 300)}`);
-    return res.json();
+    try {
+      return await res.json();
+    } catch (e) {
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+        throw new Error(`GitHub API timeout reading body of ${path} after ${HTTP_TIMEOUT / 1000}s (set COSTGREP_TIMEOUT_MS to override)`);
+      }
+      throw new Error(`invalid JSON from ${path}: ${e.message}`);
+    }
   }
 }
 
