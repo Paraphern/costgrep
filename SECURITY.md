@@ -24,8 +24,11 @@ write flags and the read-only billing subcommands are spelled out below):
 
 Environment variables it reads: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`,
 `GITHUB_REF` (resolve `--pr-comment auto`), `GITHUB_STEP_SUMMARY` (append the
-Markdown report), and `COSTGREP_NO_WAIT` (skip the rate-limit retry sleep).
-No others.
+Markdown report), `COSTGREP_NO_WAIT` (skip the rate-limit retry sleep),
+`COSTGREP_TIMEOUT_MS` (per-request HTTP timeout, default 30000 — a hanging
+server fails honestly instead of hanging the run), and `COSTGREP_API`
+(base-URL override that exists **only** so verifiers can point the CLI at a
+local mock — never needed in normal use). No others.
 
 **The two explicit write calls:** everything above is read-only. Exceptions,
 both opt-in flags you must pass yourself:

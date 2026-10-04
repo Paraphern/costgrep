@@ -4,6 +4,19 @@ All notable changes to costgrep. Format: [Keep a Changelog](https://keepachangel
 versions follow semver. Pre-1.0 breaking changes are possible in minor bumps and are
 marked **BREAKING** below.
 
+## [0.7.3] — 2026-10-04
+### Fixed (external edge-harness findings)
+- **Per-request HTTP timeout** (default 30 s, `COSTGREP_TIMEOUT_MS` to override):
+  hanging or stalled-mid-stream API endpoints now fail with an honest error
+  instead of hanging the run for minutes.
+- **Crash-free error exit:** the error path sets `exitCode` instead of a forced
+  `process.exit(1)` — exiting while fetch sockets are still alive could trip a
+  libuv assertion on Windows (observed as 0xC0000409 with a mock server).
+- `COSTGREP_API` env hook: point the CLI at a local mock for verification —
+  no more file patching in external reviews.
+- New built-in edge harness (`test/edge.test.mjs`, async-spawn + mock server):
+  hanging, stalled, garbage-body, HTTP-500 — all honest-fail, verified for real.
+
 ## [0.7.2] — 2026-10-04
 ### Fixed (verification round 3 nits)
 - SECURITY.md final paragraph no longer claims "every request goes to api.github.com

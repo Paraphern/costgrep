@@ -20,8 +20,9 @@
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
-const API = 'https://api.github.com';
-const VERSION = '0.7.2'; // keep in sync with package.json
+const API = process.env.COSTGREP_API || 'https://api.github.com'; // env override exists for local-mock verification only
+const HTTP_TIMEOUT = Math.max(1_000, parseInt(process.env.COSTGREP_TIMEOUT_MS, 10) || 30_000);
+const VERSION = '0.7.3'; // keep in sync with package.json
 
 // ---------------------------------------------------------------------------
 // Rate matrix — GitHub-hosted runners, list prices effective 2026-01-01.
@@ -160,7 +161,15 @@ async function gh(path, token) {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(`${API}${path}`, { headers });
+    let res;
+    try {
+      res = await fetch(`${API}${path}`, { headers, signal: AbortSignal.timeout(HTTP_TIMEOUT) });
+    } catch (e) {
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+        throw new Error(`GitHub API timeout on ${path} after ${HTTP_TIMEOUT / 1000}s (set COSTGREP_TIMEOUT_MS to override)`);
+      }
+      throw new Error(`network error on ${path}: ${e.message}`);
+    }
     if (res.status === 403 || res.status === 429) {
       const reset = Number(res.headers.get('x-ratelimit-reset') || 0) * 1000;
       if (attempt === 0) {
@@ -189,6 +198,7 @@ async function ghPost(path, token, body) {
       'User-Agent': 'costgrep',
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(HTTP_TIMEOUT),
   });
   if (!res.ok) throw new Error(`GitHub API ${res.status} on ${path}: ${(await res.text()).slice(0, 200)}`);
   return res.json();
@@ -785,6 +795,7 @@ async function postSlack(url, text) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: '```\n' + text.slice(0, 2900) + '\n```' }),
+    signal: AbortSignal.timeout(HTTP_TIMEOUT),
   });
   if (!res.ok) throw new Error(`Slack webhook responded ${res.status}`);
 }
@@ -974,7 +985,9 @@ async function main() {
 
 const invokedDirectly = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop());
 if (invokedDirectly) {
-  main().catch(e => { console.error(`error: ${e.message}`); process.exit(1); });
+  // exitCode (not process.exit): exiting while fetch sockets are still alive can
+  // trip libuv assertions on Windows; a natural drain is the honest, crash-free exit.
+  main().catch(e => { console.error(`error: ${e.message}`); process.exitCode = 1; });
 }
 
 export { classifyActor, jobMinutes, inferRate, buildReport, buildOrgReport, renderTable, renderMarkdown, renderCsv, outputsFor, visibilityNotice, coAuthoredByAgent, buildReconciliation, renderReconciliation, renderCredits, prSection, postSlack, monthBounds, prevMonth, DEFAULT_RATES, DEFAULT_AGENTS, DEFAULT_BOTS, DEFAULT_COAUTHORS, norm };
