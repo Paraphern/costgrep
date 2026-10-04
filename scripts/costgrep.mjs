@@ -22,7 +22,7 @@ import { parseArgs } from 'node:util';
 
 const API = process.env.COSTGREP_API || 'https://api.github.com'; // env override exists for local-mock verification only
 const HTTP_TIMEOUT = Math.max(1_000, parseInt(process.env.COSTGREP_TIMEOUT_MS, 10) || 30_000);
-const VERSION = '0.7.3'; // keep in sync with package.json
+const VERSION = '0.7.4'; // keep in sync with package.json
 
 // ---------------------------------------------------------------------------
 // Rate matrix — GitHub-hosted runners, list prices effective 2026-01-01.

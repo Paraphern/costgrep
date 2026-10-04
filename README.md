@@ -1,6 +1,7 @@
 # costgrep
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/costgrep-cli.svg)](https://www.npmjs.com/package/costgrep-cli)
 [![test](https://github.com/Paraphern/costgrep/actions/workflows/test.yml/badge.svg)](https://github.com/Paraphern/costgrep/actions/workflows/test.yml)
 [![self-audit](https://github.com/Paraphern/costgrep/actions/workflows/audit.yml/badge.svg)](https://github.com/Paraphern/costgrep/actions/workflows/audit.yml)
 
@@ -50,6 +51,18 @@ Runs **on your infrastructure** (your Actions runner, your terminal). Zero npm
 dependencies (single-file CLI core + a plain `agents.json` for the classifier
 lists — the core works standalone if the data file is missing), no telemetry,
 no code/log access — workflow-run metadata only.
+
+## Install
+
+```bash
+npx costgrep-cli --repo owner/name          # one-shot
+npm i -g costgrep-cli && costgrep --repo owner/name
+```
+
+The npm package is **`costgrep-cli`** (both binaries: `costgrep` and `costgrep-cli`).
+Honest naming note: npm's typosquat filter blocks the plain name `costgrep` as
+"too similar to `postgres`" (edit distance, really) — the repo, the GitHub action
+and everything else stay `costgrep`.
 
 ## Quick start (composite action)
 

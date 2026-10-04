@@ -2,3 +2,4 @@ node_modules/
 *.log
 costgrep.json
 .mimosa/
+.npmrc

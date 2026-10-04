@@ -4,6 +4,13 @@ All notable changes to costgrep. Format: [Keep a Changelog](https://keepachangel
 versions follow semver. Pre-1.0 breaking changes are possible in minor bumps and are
 marked **BREAKING** below.
 
+## [0.7.4] — 2026-10-04
+### Added — npm distribution
+- Published to npm as **`costgrep-cli`** (`npx costgrep-cli`, binaries: `costgrep` and
+  `costgrep-cli`). The plain name `costgrep` is blocked by npm's typosquat filter as
+  "too similar to `postgres`"; repo/action/branding remain `costgrep`.
+- README: npm badge + Install section with the naming note.
+
 ## [0.7.3] — 2026-10-04
 ### Fixed (external edge-harness findings)
 - **Per-request HTTP timeout** (default 30 s, `COSTGREP_TIMEOUT_MS` to override):
