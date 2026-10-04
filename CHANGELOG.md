@@ -11,7 +11,7 @@ marked **BREAKING** below.
   "too similar to `postgres`"; repo/action/branding remain `costgrep`.
 - README: npm badge + Install section with the naming note.
 
-## [Unreleased]
+## [0.7.7] — 2026-10-04
 ### Fixed
 - Error messages: a timeout while *reading* the response body (stalled mid-stream) now
   reports the same explicit `GitHub API timeout … after Ns` form as connect timeouts
