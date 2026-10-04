@@ -4,6 +4,13 @@ All notable changes to costgrep. Format: [Keep a Changelog](https://keepachangel
 versions follow semver. Pre-1.0 breaking changes are possible in minor bumps and are
 marked **BREAKING** below.
 
+## [0.7.2] — 2026-10-04
+### Fixed (verification round 3 nits)
+- SECURITY.md final paragraph no longer claims "every request goes to api.github.com
+  and nothing else" (the opt-in Slack webhook exists); phrased exactly now.
+- The `v1` release notes no longer hardcode a version ("currently v0.3.1" had drifted
+  three releases behind) — they link to the Releases page, so they cannot go stale.
+
 ## [0.7.1] — 2026-10-04
 ### Fixed (verification round 2 findings)
 - Org-mode Markdown printed `undefined` for jobs-fetched / in-progress counts —

@@ -50,5 +50,6 @@ CLI core is a single zero-dependency file (classifier lists live in a plain
 postinstall, no network library, no telemetry.
 
 If your threat model requires it: run with a fine-grained PAT limited to
-`actions:read` on a single repository, or inspect the traffic — every request
-goes to `api.github.com` over HTTPS and nothing else.
+`actions:read` on a single repository, or inspect the traffic — every GitHub
+request goes to `api.github.com` over HTTPS; the only other outbound request
+is the opt-in `--slack-webhook` POST you configure yourself.

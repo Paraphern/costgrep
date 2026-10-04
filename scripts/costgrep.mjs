@@ -21,7 +21,7 @@ import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs
 import { parseArgs } from 'node:util';
 
 const API = 'https://api.github.com';
-const VERSION = '0.7.1'; // keep in sync with package.json
+const VERSION = '0.7.2'; // keep in sync with package.json
 
 // ---------------------------------------------------------------------------
 // Rate matrix — GitHub-hosted runners, list prices effective 2026-01-01.
