@@ -4,6 +4,7 @@
   "description": "GitHub Actions cost breakdown: human vs AI agent vs bot. Zero-dependency CLI + composite action.",
   "type": "module",
   "license": "Apache-2.0",
+  "keywords": ["github-actions", "cost", "finops", "ci", "ai-agents", "copilot", "developer-tools", "cli"],
   "homepage": "https://github.com/Paraphern/costgrep#readme",
   "repository": { "type": "git", "url": "git+https://github.com/Paraphern/costgrep.git" },
   "bugs": "https://github.com/Paraphern/costgrep/issues",
